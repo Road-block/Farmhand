@@ -1,0 +1,16 @@
+## Interface: 60200
+## Title: Farmhand
+## Author: JCinDE
+## Notes: Adds on-screen buttons for the farming tools and seeds.
+## Version: v1.6.8
+## SavedVariables: FarmhandData
+## OptionalDeps: Masque, TipTac, DataStore
+## X-Curse-Packaged-Version: v1.6.8
+## X-Curse-Project-Name: Farmhand
+## X-Curse-Project-ID: farmhand
+## X-Curse-Repository-ID: wow/farmhand/mainline
+
+Localization.lua
+Data.lua
+Farmhand.lua
+Frames.lua
