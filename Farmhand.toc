@@ -1,16 +1,15 @@
-## Interface: 60200
-## Title: Farmhand
+## Interface: 50500
+## Title: Farmhand |T134435:16|t
 ## Author: JCinDE
+## X-ClassicAuthor: Roadblock
 ## Notes: Adds on-screen buttons for the farming tools and seeds.
-## Version: v1.6.8
+## IconTexture: 609616
+## Version: 1.6.9
 ## SavedVariables: FarmhandData
 ## OptionalDeps: Masque, TipTac, DataStore
-## X-Curse-Packaged-Version: v1.6.8
-## X-Curse-Project-Name: Farmhand
-## X-Curse-Project-ID: farmhand
-## X-Curse-Repository-ID: wow/farmhand/mainline
 
 Localization.lua
 Data.lua
+Compat.lua
 Farmhand.lua
 Frames.lua
