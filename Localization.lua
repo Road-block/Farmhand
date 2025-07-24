@@ -61,6 +61,18 @@ Wild Striped Melon
 Wild White Turnip
 Wild Windshear Cactus
 Wild Witchberries]=]
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 
 if GetLocale() == "ptBR" then
@@ -238,6 +250,18 @@ Rapteira Selvagem
 Raiz-de-cobra Selvagem
 Cactus Cortavento Selvagem
 Campainha Selvagem]=] -- Needs review
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "frFR" then
 L["AH"] = "HV"
@@ -414,6 +438,18 @@ Navet vert sauvage
 Poireau à fleur rouge sauvage
 Serpencine sauvage
 Sorcielles sauvages]=]
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "deDE" then
 L["AH"] = "AH"
@@ -460,6 +496,18 @@ L["Tools are Locked."] = "Die Geräte sind gesperrt."
 L["Unstable Portal Shard"] = "Instabiler Portalsplitter"
 L["WigglingCropNames"] = "Zuckende"
 L["WildCropNames"] = "Wilde"
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "itIT" then
 L["AH"] = "AH" -- Needs review
@@ -641,6 +689,18 @@ Foglia Carnivora Selvaggia
 Radiserpe Selvaggia
 Fiorsonoro Selvaggio
 Cactus di Tagliavento Selvaggio]=] -- Needs review
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "koKR" then
 L["AH"] = "경매장"
@@ -687,6 +747,18 @@ L["Tools are Locked."] = "농기구는 보관합니다."
 L["Unstable Portal Shard"] = "불안정한 차원문 조각"
 L["WigglingCropNames"] = "꿈틀거리는"
 L["WildCropNames"] = "야생"
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "esMX" then
 L["AH"] = "Casa de subastas"
@@ -860,6 +932,18 @@ Melón a rayas salvaje
 Naba blanca salvaje
 Cactus Cortaviento salvaje
 Morujas salvajes]=]
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "ruRU" then
 L["AH"] = "Аукцион"
@@ -904,6 +988,18 @@ L["Tools are Locked."] = "Инструменты закреплены."
 L["Unstable Portal Shard"] = "Нестабильный кристалл портала"
 L["WigglingCropNames"] = "Ерзающ"
 L["WildCropNames"] = "Дик"
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "zhCN" then
 L["AH"] = "拍卖行"
@@ -965,6 +1061,18 @@ L["Tools are Locked."] = "农具已锁定"
 L["Unstable Portal Shard"] = "不稳定的传送门碎片"
 L["WigglingCropNames"] = "不安分的"
 L["WildCropNames"] = "野生"
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "esES" then
 L["AH"] = "Casa de subastas"
@@ -1138,6 +1246,18 @@ Melón a rayas salvaje
 Naba blanca salvaje
 Cactus Cortaviento salvaje
 Morujas salvajes]=]
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 elseif GetLocale() == "zhTW" then
 L["AH"] = "拍賣" -- Needs review
@@ -1184,5 +1304,17 @@ L["Tools are Locked."] = "農具已鎖定"
 L["Unstable Portal Shard"] = "不穩定的傳送門碎片"
 L["WigglingCropNames"] = "晃動的"
 L["WildCropNames"] = "野生的"
+L["Occupied"]  = "Occupied"
+L["Stubborn"]  = "Stubborn"
+L["Alluring"]  = "Alluring"
+L["Wild"]      = "Wild"
+L["Tangled"]   = "Tangled"
+L["Parched"]   = "Parched"
+L["Infested"]  = "Infested"
+L["Wiggling"]  = "Wiggling"
+L["Smothered"] = "Smothered"
+L["Unstable"]  = "Unstable"
+L["Bursting"]  = "Bursting"
+L["Runty"]     = "Runty"
 
 end

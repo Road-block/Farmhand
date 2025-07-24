@@ -54,8 +54,8 @@ local GetItemCount = function(...)
   end
 end
 local GetItemIcon = function(...)
-  if C_Item and C_Item.GetItemIcon then
-    return C_Item.GetItemIcon(...)
+  if C_Item and C_Item.GetItemIconByID then
+    return C_Item.GetItemIconByID(...)
   elseif _G.GetItemIcon then
     return _G.GetItemIcon(...)
   end

@@ -1,6 +1,7 @@
 local addonName, FH = ...
 local L = FH.L
 FH.M = FH.M or {}
+FH.E = FH.E or {} -- exports
 local _
 
 local msq, msqGroups = nil, {}
@@ -70,13 +71,14 @@ function FH.M.Initialize()
 	end
 
 	--print("Intial X="..FarmhandData.X.." Y="..FarmhandData.Y)
-	Farmhand:SetPoint("Center",UIParent,"Center",FarmhandData.X,FarmhandData.Y)
+	Farmhand:SetPoint("CENTER",UIParent,"CENTER",FarmhandData.X,FarmhandData.Y)
 	
 	FarmhandSeeds.Update = FH.M.UpdateBar
 	FarmhandTools.Update = FH.M.UpdateBar
 	FarmhandPortals.Update = FH.M.UpdateBar
 	
-	hooksecurefunc("MerchantItemButton_OnEnter", FH.M.MerchantButtonOnEnter)
+	hooksecurefunc(GameTooltip, "SetMerchantItem", FH.M.SetMerchantItem)
+	GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
 	
 end
 
@@ -127,13 +129,19 @@ local function AddCharacterCountLine(character, searchedID)
 	end
 end
 
-function FH.M.MerchantButtonOnEnter(button)
+function FH.M.HideStockTip(tooltip)
+	local tooltip = tooltip or GameTooltip
+	if Farmhand.StockTip:IsOwned(tooltip) then
+		Farmhand.StockTip:ClearLines()
+		Farmhand.StockTip:Hide()
+	end
+end
+
+function FH.M.SetMerchantItem(tooltip, slot)
 	if ( MerchantFrame.selectedTab == 1 ) and FarmhandData.ShowStockTip and FH.MerchantOpen then
-		local link = GetMerchantItemLink(button:GetID())
-		if link == nil then return end
-		local _, _, ItemID = string.find(link, "|?c?f?f?%x*|?H?[^:]*:?(%d+):?%d*:?%d*:?%d*:?%d*:?%d*:?%-?%d*:?%-?%d*:?%d*:?%d*|?h?%[?[^%[%]]*]?|?h?|?r?")
+		local tooltip = tooltip or GameTooltip
+		local ItemID = GetMerchantItemID(slot)
 		if ItemID == nil then return end
-		ItemID = tonumber(ItemID)
 		local VeggieID = FH.VeggiesBySeed[ItemID]
 		if VeggieID == nil then
 			ItemID = FH.SeedsBySeedBag[ItemID]
@@ -149,14 +157,14 @@ function FH.M.MerchantButtonOnEnter(button)
 			icon = icon and "|T"..icon..":14:14:0:0:32:32:3:29:3:29|t" or "??"
 			veggieName = veggieName and icon.." "..veggieName or icon.." ".."ItemID: "..VeggieID
 			--print(VeggieID, veggieName, onHand, inBank,icon)
-			Farmhand.StockTip:SetOwner(button:GetParent(), "ANCHOR_NONE");
+			Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE");
 			Farmhand.StockTip:ClearAllPoints();
 			if FarmhandData.StockTipPosition == "BELOW" then
-				Farmhand.StockTip:SetPoint("TopLeft", button:GetParent(), "TopRight", 0, 0);
+				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0);
 			else
-				Farmhand.StockTip:SetPoint("BottomLeft", button, "TopRight", GameTooltip:GetWidth(), 0);
+				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0);
 			end
-			Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,255,0)
+			Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,1,0)
 
 			if DataStore then
 
@@ -184,22 +192,17 @@ function FH.M.MerchantButtonOnEnter(button)
 				end
 
 			else
-				Farmhand.StockTip:AddDoubleLine(L["On Hand"],onHand,0,255,0,255,255,255)
-				Farmhand.StockTip:AddDoubleLine(L["In Bank"],inBank,0,255,0,255,255,255)
+				Farmhand.StockTip:AddDoubleLine(L["On Hand"],onHand,0,1,0,1,1,1)
+				Farmhand.StockTip:AddDoubleLine(L["In Bank"],inBank,0,1,0,1,1,1)
 				FarmhandMerchantStockTipTextRight2:ClearAllPoints()
-				FarmhandMerchantStockTipTextRight2:SetPoint("TopLeft",FarmhandMerchantStockTipTextRight1,"BottomLeft",0,-2)
+				FarmhandMerchantStockTipTextRight2:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight1,"BOTTOMLEFT",0,-2)
 				FarmhandMerchantStockTipTextRight3:ClearAllPoints()
-				FarmhandMerchantStockTipTextRight3:SetPoint("TopLeft",FarmhandMerchantStockTipTextRight2,"BottomLeft",0,-2)
+				FarmhandMerchantStockTipTextRight3:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight2,"BOTTOMLEFT",0,-2)
 			end
 
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
-			if not button.FarmhandHooked then
-				button:HookScript("OnLeave",function(button)
-					Farmhand.StockTip:Hide()
-				end)
-				button.FarmhandHooked = true
-			end
+
 		end
 	end
 end
@@ -225,7 +228,7 @@ function FH.M.ZoneChanged()
 	
 	if (LeavingSunsong or LeavingMarket) and not (EnteringSunsong or EnteringMarket) then
 		--print("Leaving Sunsong area. Hiding Farmhand")
-		Farmhand:UnregisterEvent("BAG_UPDATE")
+		Farmhand:UnregisterEvent("BAG_UPDATE_DELAYED")
 		Farmhand:UnregisterEvent("MERCHANT_SHOW")
 		Farmhand:UnregisterEvent("MERCHANT_CLOSED")
 		Farmhand:UnregisterEvent("MERCHANT_UPDATE")
@@ -238,7 +241,7 @@ function FH.M.ZoneChanged()
 	
 	if (EnteringSunsong or EnteringMarket) and not (FH.InSunsong or FH.InMarket) then
 		--print("Entering Sunsong area. Updating Farmhand.")
-		Farmhand:RegisterEvent("BAG_UPDATE")
+		Farmhand:RegisterEvent("BAG_UPDATE_DELAYED")
 		Farmhand:RegisterEvent("MERCHANT_SHOW")
 		Farmhand:RegisterEvent("MERCHANT_CLOSED")
 		Farmhand:RegisterEvent("MERCHANT_UPDATE")
@@ -347,7 +350,7 @@ end
 
 function FH.M.ResetAnchors()
 	Farmhand:ClearAllPoints()
-	Farmhand:SetPoint("Center",UIParent,FarmhandData.X,FarmhandData.Y)
+	Farmhand:SetPoint("CENTER",UIParent,FarmhandData.X,FarmhandData.Y)
 end
 
 function FH.M.ButtonOnHide()
@@ -493,14 +496,20 @@ function FH.M.UpdateBar(Bar)
 	local ButtonSpacing = 6
 	local MiscTools = FarmhandData.ShowMiscTools or {}
 	
-	--print("UpdateBar "..Bar:GetName().." with "..#Bar.Buttons.." items.")
-
 	for _, Button in ipairs(Bar.Buttons) do
-		local cropScanner = Button.ItemType and (Button.ItemType == "CropScanner")
-		if Button.ItemID then
-			local ItemCount = FH.GetItemCount(Button.ItemID,false,true)
-			if ItemCount > 0 then
-				if Button.ItemType ~= "MiscTool" or MiscTools[Button.ItemID] then
+		local ItemCount = Button.ItemID and FH.GetItemCount(Button.ItemID,false,true) or 0
+		if ItemCount > 0 or Button.ItemType == "CropScanner" then
+			if Button.ItemType ~= "MiscTool" or MiscTools[Button.ItemID] then
+
+				if Shown % 8 == 0 then
+					local Row = math.floor(Shown/8)
+					Button:SetPoint("TOPLEFT",Bar,"TOPLEFT", ButtonSpacing/2, -ButtonSpacing/2 - Row*Button:GetHeight() - Row*ButtonSpacing)
+					Last = Button
+				else
+					Button:SetPoint("TOPLEFT",Last,"TOPRIGHT",ButtonSpacing,0)
+					Last = Button
+				end
+				if Button.ItemID then
 					Button.Bag, Button.Slot = FH.M.FindItemInBags(Button.ItemID)
 					if Bar.ShowItemCount then
 						if ItemCount > 999 then
@@ -509,27 +518,14 @@ function FH.M.UpdateBar(Bar)
 							Button.Count:SetText(ItemCount)
 						end
 					end
-					Button:Show()
-					Shown = Shown + 1
-				else
-					Button:Hide()
 				end
+				Button:Show()
+				Shown = Shown + 1
 			else
 				Button:Hide()
 			end
-		elseif cropScanner then
-			Button:Show()
-			Shown = Shown + 1
 		else
 			Button:Hide()
-		end
-		if Shown % 8 == 0 then
-			local Row = math.floor(Shown/8)
-			Button:SetPoint("TopLeft",Bar,"TopLeft", ButtonSpacing/2, -ButtonSpacing/2 - Row*Button:GetHeight() - Row*ButtonSpacing)
-			Last = Button
-		else
-			Button:SetPoint("TopLeft",Last,"TopRight",ButtonSpacing,0)
-			Last = Button
 		end
 	end
 	
@@ -575,55 +571,6 @@ function FH.M.Update()
 	local FHW = max(SBW,TBW,PBW) -- + Farmhand.Backdrop:GetBackdrop().insets.left + Farmhand.Backdrop:GetBackdrop().insets.right
 	Farmhand:SetWidth(FHW)
 
-end
-
-function FH.M.CropScannerPreClick(Button,MouseButton,Down)
-	if Down and not InCombatLockdown() then
-		if IsShiftKeyDown() then
-			Button:SetAttribute("type",nil)
-		else
-			Button:SetAttribute("type","click")
-		end
-	end
-end
-
-function FH.M.CropScannerCheckForTarget()
-	if UnitExists("target") then
-		local CropName = UnitName("target")
-		local Icon = ICON_LIST[GetRaidTargetIndex("target")] and ICON_LIST[GetRaidTargetIndex("target")].."0|t" or ""
-		local msg = L["Crop Scanner found:"].." "..Icon.." "..CropName
-		tinsert(FarmhandScanButton.ScannerOutput,1,msg)
-	end
-end
-
-function FH.M.CropScannerPostClick(Button,MouseButton,Down)
-	if Down then return end
-	if not Button:GetAttribute("type") then 
-		if not InCombatLockdown() then
-			Button:SetAttribute("type","click")
-		end
-		return 
-	end
-	if #Button.ScannerOutput == 0 then
-		if FarmhandData.PrintScannerMessages then
-			print(L["Crop Scanner finished."].." "..L["The crops are looking good!"])
-			RaidNotice_AddMessage(RaidBossEmoteFrame,L["The crops are looking good!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
-		end
-		if FarmhandData.PlayScannerSounds then
-			PlaySound(SOUNDKIT.IG_QUEST_LIST_COMPLETE,"SFX")
-		end
-	else
-		if FarmhandData.PrintScannerMessages then
-			for _, msg in ipairs(Button.ScannerOutput) do
-				print(msg)
-			end
-			RaidNotice_AddMessage(RaidBossEmoteFrame,L["Some crops need attention!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
-		end
-		if FarmhandData.PlayScannerSounds then
-			PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST,"SFX")
-		end
-		wipe(Button.ScannerOutput)
-	end
 end
 
 function FH.M.ScanButtonOnEnter()
@@ -689,3 +636,39 @@ function FH.M.CombatEnded()
 	end
 	wipe(FH.PostCombatQueue)
 end
+
+function FH.E.Mark(_,button,down)
+	if down then return end
+	local name = UnitExists("target") and UnitName("target") or ""
+	local found
+	for k,crop in pairs(FH.CropStates) do
+		local cropname, mark = crop.CropName, crop.Icon
+		if strfind(name,cropname) then
+			if GetRaidTargetIndex("target") ~= mark then
+				SetRaidTarget("target",mark)
+			end
+			local Icon = ICON_LIST[GetRaidTargetIndex("target")] and ICON_LIST[mark].."0|t" or ""
+			local msg = L["Crop Scanner found:"].." "..Icon.." "..name
+			if FarmhandData.PrintScannerMessages then
+				print(msg)
+				RaidNotice_AddMessage(RaidBossEmoteFrame,L["Some crops need attention!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
+			end
+			if FarmhandData.PlayScannerSounds then
+				PlaySound(SOUNDKIT.IG_QUEST_LOG_ABANDON_QUEST,"SFX")
+			end
+			found = true
+			return
+		end
+	end
+	if not found then
+		if FarmhandData.PrintScannerMessages then
+			print(L["Crop Scanner finished."].." "..L["The crops are looking good!"])
+			RaidNotice_AddMessage(RaidBossEmoteFrame,L["The crops are looking good!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
+		end
+		if FarmhandData.PlayScannerSounds then
+			PlaySound(SOUNDKIT.IG_QUEST_LIST_COMPLETE,"SFX")
+		end
+	end
+end
+
+_G[addonName.."Exp"] = FH.E

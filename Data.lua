@@ -131,16 +131,17 @@ FH.SeedsBySeedBag = {
 }
 
 FH.CropStates = {
-	{ CropNames = L["Occupied Soil"], Icon = 8 },
-	{ CropNames = L["Stubborn Weed"], Icon = 4 },
-	{ CropNames = L["AlluringCropNames"], Icon = 5 },
-	{ CropNames = L["WildCropNames"], Icon = 3 },
-	{ CropNames = L["TangledCropNames"], Icon = 7 },
-	{ CropNames = L["ParchedCropNames"], Icon = 6 },
-	{ CropNames = L["InfestedCropNames"], Icon = 4 },
-	{ CropNames = L["WigglingCropNames"], Icon = 8 },
-	{ CropNames = L["SmotheredCropNames"], Icon = 2 },
-	{ CropNames = L["Unstable Portal Shard"], Icon = 3 },
-	{ CropNames = L["BurstingCropNames"], Icon = 2 },
-	{ CropNames = L["RuntyCropNames"], Icon = 1 },
+	{ CropName = L["Occupied"], CropNames = L["Occupied Soil"], Icon = 8 },
+	{ CropName = L["Stubborn"], CropNames = L["Stubborn Weed"], Icon = 4 },
+	{ CropName = L["Alluring"], CropNames = L["AlluringCropNames"], Icon = 5 },
+	{ CropName = L["Wild"], CropNames = L["WildCropNames"], Icon = 3 },
+	{ CropName = L["Tangled"], CropNames = L["TangledCropNames"], Icon = 7 },
+	{ CropName = L["Parched"], CropNames = L["ParchedCropNames"], Icon = 6 },
+	{ CropName = L["Infested"], CropNames = L["InfestedCropNames"], Icon = 4 },
+	{ CropName = L["Wiggling"], CropNames = L["WigglingCropNames"], Icon = 8 },
+	{ CropName = L["Smothered"], CropNames = L["SmotheredCropNames"], Icon = 2 },
+	{ CropName = L["Unstable"], CropNames = L["Unstable Portal Shard"], Icon = 3 },
+	{ CropName = L["Bursting"], CropNames = L["BurstingCropNames"], Icon = 2 },
+	{ CropName = L["Runty"], CropNames = L["RuntyCropNames"], Icon = 1 },
+	--{ CropName = "Plump", CropNames = "", Icon = 2 }, -- debug
 }

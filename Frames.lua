@@ -58,9 +58,7 @@ local function NewFarmhandButton(Name,Parent,ItemID,ItemType)
 end
 
 local function CreateBarButtons(Bar, Items, ItemType)
-	if Bar.Buttons == nil then
-		Bar.Buttons = {}
-	end
+	Bar.Buttons = Bar.Buttons or {}
 	local Buttons = Bar.Buttons
 	local indexOffset = #Buttons
 	for Index, ItemID in ipairs(Items) do
@@ -88,22 +86,25 @@ local function NewMacroButton(Step, SubStep, MacroText)
 	return f
 end
 
-local f = CreateFrame("Frame",addonName,UIParent, BackdropTemplateMixin and "BackdropTemplate")
-f:SetDontSavePosition(true)
-f:SetClampedToScreen(true)
-f:SetMovable(true)
+local addonFrame = CreateFrame("Frame",addonName, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+addonFrame:SetDontSavePosition(true)
+addonFrame:SetClampedToScreen(true)
+addonFrame:SetMovable(true)
+addonFrame.tex = addonFrame:CreateTexture()
+addonFrame.tex:SetAllPoints()
+addonFrame.tex:SetColorTexture(0,1,0,0.5)
+addonFrame.tex:Hide()
 
-f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("ZONE_CHANGED")
-f:RegisterEvent("ZONE_CHANGED_INDOORS")
-f:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-f:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-f:SetScript("OnEvent",function(self,event,...)
+addonFrame:RegisterEvent("ADDON_LOADED")
+addonFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+addonFrame:RegisterEvent("ZONE_CHANGED")
+addonFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
+addonFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+addonFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+addonFrame:SetScript("OnEvent",function(self,event,...)
 	if event == "ADDON_LOADED" then
 		local AddOn = ...
 		if AddOn == addonName then
---			f:RegisterEvent("GET_ITEM_INFO_RECEIVED ")
 			FH.M.UpdateMiscToolOptionText()
 			FH.M.RunAfterCombat(FH.M.Initialize)
 			self:UnregisterEvent("ADDON_LOADED")
@@ -115,7 +116,7 @@ f:SetScript("OnEvent",function(self,event,...)
 		   event == "ZONE_CHANGED" or 
 		   event == "ZONE_CHANGED_INDOORS" then
 		FH.M.RunAfterCombat(FH.M.ZoneChanged)
-	elseif event == "BAG_UPDATE" then
+	elseif event == "BAG_UPDATE_DELAYED" then
 		FH.M.RunAfterCombat(FH.M.Update)
 	elseif event == "MERCHANT_SHOW" or event == "MERCHANT_CLOSED" then
 		if self:IsShown() then
@@ -132,81 +133,71 @@ f:SetScript("OnEvent",function(self,event,...)
 	end
 end)
 
-f = CreateFrame("Frame","FarmhandSeeds",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
-f:SetPoint("Top")
-f:SetScale(1)
-f:Hide()
-CreateBarButtons(f, FH.Seeds, "Seed")
-CreateBarButtons(f, FH.SeedBags, "SeedBag")
-f.ShowItemCount = true
+local seedFrame = CreateFrame("Frame","FarmhandSeeds",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
+seedFrame.tex = seedFrame:CreateTexture()
+seedFrame.tex:SetAllPoints()
+seedFrame.tex:SetColorTexture(1,1,0,0.5)
+seedFrame.tex:Hide()
+seedFrame:ClearAllPoints()
+seedFrame:SetPoint("TOP",Farmhand,"TOP",0,0)
+seedFrame:SetScale(1)
+seedFrame:Hide()
+CreateBarButtons(seedFrame, FH.Seeds, "Seed")
+CreateBarButtons(seedFrame, FH.SeedBags, "SeedBag")
+seedFrame.ShowItemCount = true
 
-f = CreateFrame("Frame","FarmhandTools",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
-f:SetPoint("Top",FarmhandSeeds,"Bottom")
-f:SetScale(1.5)
-f:Hide()
-CreateBarButtons(f, FH.Tools, "FarmTool")
-CreateBarButtons(f, FH.MiscTools, "MiscTool")
+local toolFrame = CreateFrame("Frame","FarmhandTools",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
+toolFrame.tex = toolFrame:CreateTexture()
+toolFrame.tex:SetAllPoints()
+toolFrame.tex:SetColorTexture(1,0,0,0.5)
+toolFrame.tex:Hide()
+toolFrame:ClearAllPoints()
+toolFrame:SetPoint("TOP",seedFrame,"BOTTOM",0,0)
+toolFrame:SetScale(1.5)
+toolFrame:Hide()
+CreateBarButtons(toolFrame, FH.Tools, "FarmTool")
+CreateBarButtons(toolFrame, FH.MiscTools, "MiscTool")
 
-f = CreateFrame("Frame","FarmhandPortals",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
-f:SetPoint("Top",FarmhandTools,"Bottom")
-f:SetScale(.75)
-f:Hide()
-CreateBarButtons(f, FH.Portals, "Portal")
-f.ShowItemCount = true
+local portalFrame = CreateFrame("Frame","FarmhandPortals",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
+portalFrame.tex = portalFrame:CreateTexture()
+portalFrame.tex:SetAllPoints()
+portalFrame.tex:SetColorTexture(0,0,1,0.5)
+portalFrame.tex:Hide()
+portalFrame:ClearAllPoints()
+portalFrame:SetPoint("TOP",toolFrame,"BOTTOM",0,0)
+portalFrame:SetScale(.75)
+portalFrame:Hide()
+CreateBarButtons(portalFrame, FH.Portals, "Portal")
+portalFrame.ShowItemCount = true
 
-f = NewFarmhandButton("FarmhandScanButton",FarmhandTools)
-f.Icon:SetTexture([[Interface\AddOns\Farmhand\RadarIcon.tga]])
-f.ItemType = "CropScanner"
-tinsert(FarmhandTools.Buttons,f)
+local scanFrame = NewFarmhandButton("FarmhandScanButton",toolFrame)
+scanFrame.Icon:SetTexture([[Interface\AddOns\Farmhand\RadarIcon.tga]])
+scanFrame.ItemType = "CropScanner"
+tinsert(toolFrame.Buttons,scanFrame)
 
-for Step, State in ipairs(FH.CropStates) do
-	local SubStep = 1
-	local MacroText = "/cleartarget\n"
-	local IconLine = "/run if UnitExists(\"target\") and GetRaidTargetIndex(\"target\") ~= "..State.Icon.." then SetRaidTarget(\"target\","..State.Icon..") end\n"
-
-	local Lines = { strsplit("\n", gsub(State.CropNames,"\r","")) }
-	for i,line in ipairs(Lines) do
-		line = "/tar "..strtrim(line).."\n"
-		if strlen(MacroText) + strlen(line) + strlen(IconLine) + strlen("/click FHSBE_9999_9999\n") > 1023 then
-			MacroText = MacroText..format("/click FHSBE_%d_%d\n",Step,SubStep+1)
-			NewMacroButton(Step, SubStep, MacroText)
-			SubStep = SubStep + 1
-			MacroText = ""
-		end
-		MacroText = MacroText..line
-	end
-	MacroText = MacroText..IconLine
-	MacroText = MacroText..format("/click FHSBE_%d_%d\n",Step+1,1)
-	local f = NewMacroButton(Step, SubStep, MacroText)
-	if Step > 1 then
-		f:SetScript("PreClick", function() FH.M.CropScannerCheckForTarget(false) end)
-	end
-	if Step == #FH.CropStates then
-		f:SetScript("PostClick", function() FH.M.CropScannerCheckForTarget(false) end)
+local scanCropsText = ""
+do
+	for i,crop in ipairs(FH.CropStates) do
+		scanCropsText = scanCropsText..(i~=1 and "\n/tar " or "/tar ")..crop.CropName
 	end
 end
+scanFrame:SetAttribute("type","macro")
+scanFrame:SetAttribute("macrotext",scanCropsText)
+scanFrame:SetScript("PostClick",FarmhandExp.Mark)
+scanFrame:SetScript("OnEnter", FH.M.ScanButtonOnEnter)
+scanFrame:SetScript("OnLeave", FH.M.ScanButtonOnLeave)
 
-f:SetAttribute("downbutton","ignore")
-f:SetAttribute("type", "click")
-f:SetAttribute("clickbutton", FHSBE_1_1)
-f:SetAttribute("*type-ignore", "")
+scanFrame:SetScript("OnMouseDown", FH.M.ButtonOnMouseDown)
+scanFrame:SetScript("OnMouseUp", FH.M.ButtonOnMouseUp)
+scanFrame:SetScript("OnHide", FH.M.ButtonOnHide)
 
-f:SetScript("PreClick", FH.M.CropScannerPreClick)
-f:SetScript("PostClick",FH.M.CropScannerPostClick)
-f:SetScript("OnEnter", FH.M.ScanButtonOnEnter)
-f:SetScript("OnLeave", FH.M.ScanButtonOnLeave)
-
-f:SetScript("OnMouseDown", FH.M.ButtonOnMouseDown)
-f:SetScript("OnMouseUp", FH.M.ButtonOnMouseUp)
-f:SetScript("OnHide", FH.M.ButtonOnHide)
-
-f.ScannerOutput = {}
+scanFrame.ScannerOutput = {}
 
 if msqGroups["FarmhandTools"] then
-	msqGroups["FarmhandTools"]:AddButton(f)
+	msqGroups["FarmhandTools"]:AddButton(scanFrame)
 end
 
-f = CreateFrame("Frame","FarmhandOptionsPanel",nil)
+local f = CreateFrame("Frame","FarmhandOptionsPanel",nil)
 f.name = addonName
 if _G.InterfaceOptions_AddCategory then
 	InterfaceOptions_AddCategory(f)
@@ -217,64 +208,64 @@ elseif Settings and Settings.RegisterCanvasLayoutCategory then
 end
 
 --[[f = CreateFrame("CheckButton","FarmhandToolsLockOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",50,-50)
+f:SetPoint("TOPLEFT",50,-50)
 f:SetScript("OnClick",function(self) FH.M.SetLockToolsOption(self:GetChecked()) end)
 FarmhandToolsLockOptionText:SetText(L["Lock tools to prevent them being dropped when you leave the farm."])]]
 
 f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",50,-50)-- FarmhandToolsLockOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",50,-50)-- FarmhandToolsLockOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetMessagesOption(self:GetChecked()) end)
 FarmhandMessagesOptionText:SetText(L["Show crop scanner findings in the chat window."])
 
 f = CreateFrame("CheckButton","FarmhandSoundsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandMessagesOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",FarmhandMessagesOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetSoundsOption(self:GetChecked()) end)
 FarmhandSoundsOptionText:SetText(L["Play sounds when crop scanner finishes."])
 
 f = CreateFrame("CheckButton","FarmhandPortalsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandSoundsOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",FarmhandSoundsOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetPortalsOption,{self:GetChecked()}) end)
 FarmhandPortalsOptionText:SetText(L["Show Portal Shard icons below the tools buttons."])
 
 f = CreateFrame("CheckButton","FarmhandHideInCombatOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandPortalsOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",FarmhandPortalsOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetHideInCombatOption,{self:GetChecked()}) end)
 FarmhandHideInCombatOptionText:SetText(L["Hide Farmhand entirely during combat."])
 
 f = CreateFrame("CheckButton","FarmhandStockTipOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandHideInCombatOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",FarmhandHideInCombatOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetStockTipOption,{self:GetChecked()}) end)
 FarmhandStockTipOptionText:SetText(L["Show special tooltip for vegetable seeds in merchant window."])
 
 f = CreateFrame("Frame", "FarmhandStockTipPositionDropdown", FarmhandOptionsPanel, "UIDropDownMenuTemplate")
-f:SetPoint("TopLeft",FarmhandStockTipOption,"Bottomleft",10,0)
+f:SetPoint("TOPLEFT",FarmhandStockTipOption,"BOTTOMLEFT",10,0)
 UIDropDownMenu_SetWidth(f, 300)
 UIDropDownMenu_JustifyText(f,"LEFT")
 UIDropDownMenu_Initialize(f, FH.M.InitializeStockTipDropdown)
 Farmhand.StockTipPositionDropdown = f
 
-f = CreateFrame("GameTooltip","FarmhandMerchantStockTip",Farmhand,"GameTooltipTemplate")
+local f = CreateFrame("GameTooltip","FarmhandMerchantStockTip",Farmhand,"GameTooltipTemplate")
 Farmhand.StockTip = f
 
 f = CreateFrame("CheckButton","FarmhandSeedIconOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandStockTipOption,"Bottomleft",0,-45)
+f:SetPoint("TOPLEFT",FarmhandStockTipOption,"BOTTOMLEFT",0,-45)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetSeedIconOption,{self:GetChecked()}) end)
 FarmhandSeedIconOptionText:SetText(L["Show Vegetable Icon on Seed Buttons"])
 
 f = CreateFrame("CheckButton","FarmhandBagIconOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandSeedIconOption,"Bottomleft",0,0)
+f:SetPoint("TOPLEFT",FarmhandSeedIconOption,"BOTTOMLEFT",0,0)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetBagIconOption,{self:GetChecked()}) end)
 FarmhandBagIconOptionText:SetText(L["Show Vegetable Icon on Seed Bag Buttons"])
 
 f = CreateFrame("CheckButton","FarmhandMiscToolsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TopLeft",FarmhandBagIconOption,"Bottomleft",0,-15)
+f:SetPoint("TOPLEFT",FarmhandBagIconOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetMiscToolsOption,{self:GetChecked()}) end)
 FarmhandMiscToolsOptionText:SetText(L["Show Optional Miscellaneous Tools"])
 
 local LastTool
 for _,v in ipairs(FH.MiscTools) do
 	f = CreateFrame("CheckButton","FarmhandMiscToolsOption"..v,FarmhandOptionsPanel,"UICheckButtonTemplate")
-	f:SetPoint("TopLeft",LastTool or FarmhandMiscToolsOption,"Bottomleft",LastTool == nil and 20 or 0, 0)
+	f:SetPoint("TOPLEFT",LastTool or FarmhandMiscToolsOption,"BOTTOMLEFT",LastTool == nil and 20 or 0, 0)
 	f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetMiscToolsOption,{self:GetChecked(), v}) end)
 	f:SetScript("OnEnter",function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
@@ -296,6 +287,6 @@ function FH.M.UpdateMiscToolOptionText()
 	end
 end
 
-f = CreateFrame("GameTooltip","FarmhandScanningTooltip",nil,"GameTooltipTemplate")
+local f = CreateFrame("GameTooltip","FarmhandScanningTooltip",nil,"GameTooltipTemplate")
 f:SetOwner( WorldFrame, "ANCHOR_NONE" );
-f.ScanningTooltip = f
+FH.ScanningTooltip = f
