@@ -441,5 +441,10 @@ SlashCmdList[addonUpper] = function(msg, editbox)
 		if msg == "darksoil" or msg == "soil" then
 			FH.M.SetDarkSoilOption(not db.DarkSoilHelpers)
 		end
+		if msg == "way" or msg == "point" or msg == "clear" then
+			if FH.M.RemoveAllWaypoints then
+				FH.M.RemoveAllWaypoints()
+			end
+		end
 	end
 end

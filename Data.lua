@@ -340,7 +340,7 @@ function FH.M.GetGiftTargets(item)
 				return_t[name].turnin = FH.TurninLink[item] or format("ItemID:%d",item)
 				return_t[name].location = data.location
 				return_t[name].reward = data.reward
-				return_t[name].reward_txt = FH.M.GetNPCRewardsAsText(npcid,true)
+				return_t[name].reward_txt = FH.M.GetNPCRewardsAsText(npcid,true) or ""
 				found = true
 			end
 		end
@@ -425,7 +425,7 @@ function FH.M.GetBagItemTooltipData(itemid)
 				return_t[npcid] = return_t[npcid] or {}
 				return_t[npcid].npc = name and (icon..name) or format("NPCid:%d",npcid)
 				return_t[npcid].reaction = reaction
-				return_t[npcid].reward = FH.M.GetNPCRewardsAsText(npcid)
+				return_t[npcid].reward = FH.M.GetNPCRewardsAsText(npcid) or ""
 			end
 		end
 		if found then
@@ -443,7 +443,7 @@ function FH.M.GetBagItemTooltipData(itemid)
 				return_t[npcid] = return_t[npcid] or {}
 				return_t[npcid].npc = name and (icon..name) or format("NPCid:%d",npcid)
 				return_t[npcid].reaction = reaction
-				return_t[npcid].reward = FH.M.GetNPCRewardsAsText(npcid)
+				return_t[npcid].reward = FH.M.GetNPCRewardsAsText(npcid) or ""
 			end
 		end
 		if found then
