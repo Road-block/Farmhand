@@ -1,8 +1,9 @@
 local addonName, FH = ...
 local L = FH.L
-FH.M = FH.M or {}
+FH.M = FH.M or {} -- methods
 FH.E = FH.E or {} -- exports
-local _
+FH._i = FH._i or {} -- internal state
+local ValleyMapID,_ = 376
 
 local msq, msqGroups = nil, {}
 if LibStub then
@@ -12,6 +13,7 @@ if LibStub then
 			FarmhandTools = msq:Group(addonName,"Tools"),
 			FarmhandSeeds = msq:Group(addonName,"Seeds"),
 			FarmhandPortals = msq:Group(addonName,"Portals"),
+			FarmhandTurnins = msq:Group(addonName,"Turnins"), -- needs implementation
 		}
 	end
 end
@@ -20,6 +22,7 @@ local GREEN		= "|cFF00FF00"
 local WHITE		= "|cFFFFFFFF"
 local ORANGE	= "|cFFFF7F00"
 local TEAL		= "|cFF00FF9A"
+local LABEL   = format("|T134435:16|t%s%s|r:",TEAL,addonName)
 
 local FarmhandDataDefaults = {
 	X = 0,
@@ -33,23 +36,24 @@ local FarmhandDataDefaults = {
 	StockTipPosition = "BELOW",
 	ShowVeggieIconsForSeeds = false,
 	ShowVeggieIconsForBags = false,
+	DarkSoilHelpers = false,
+	ShowTurnins = false,
 }
 
 function FH.M.Initialize()
 	
-	if FarmhandData == nil then
-		FarmhandData = FarmhandDataDefaults
-	else
-		for k, v in pairs(FarmhandDataDefaults) do
-			if FarmhandData[k] == nil then FarmhandData[k] = v end
-		end
+	FarmhandData = FarmhandData or CopyTable(FarmhandDataDefaults)
+	for k, v in pairs(FarmhandDataDefaults) do
+		if FarmhandData[k] == nil then FarmhandData[k] = v end
 	end
 
 --	FarmhandToolsLockOption:SetChecked(FarmhandData.ToolsLocked)
 	FarmhandMessagesOption:SetChecked(FarmhandData.PrintScannerMessages)
 	FarmhandSoundsOption:SetChecked(FarmhandData.PlayScannerSounds)
 	FarmhandPortalsOption:SetChecked(FarmhandData.ShowPortals)
+	FarmhandTurninsOption:SetChecked(FarmhandData.ShowTurnins)
 	FarmhandHideInCombatOption:SetChecked(FarmhandData.HideInCombat)
+	FarmhandDarkSoilOption:SetChecked(FarmhandData.DarkSoilHelpers)
 	FarmhandStockTipOption:SetChecked(FarmhandData.ShowStockTip)
 
 	FarmhandSeedIconOption:SetChecked(FarmhandData.ShowVeggieIconsForSeeds)
@@ -70,15 +74,19 @@ function FH.M.Initialize()
 		FH.GetItemInfo(Veggie)
 	end
 
-	--print("Intial X="..FarmhandData.X.." Y="..FarmhandData.Y)
 	Farmhand:SetPoint("CENTER",UIParent,"CENTER",FarmhandData.X,FarmhandData.Y)
 	
 	FarmhandSeeds.Update = FH.M.UpdateBar
 	FarmhandTools.Update = FH.M.UpdateBar
 	FarmhandPortals.Update = FH.M.UpdateBar
+	FarmhandTurnins.Update = FH.M.UpdateBar
 	
-	hooksecurefunc(GameTooltip, "SetMerchantItem", FH.M.SetMerchantItem)
+	hooksecurefunc(GameTooltip, "SetMerchantItem", FH.M.SetMerchantItemTooltip)
+	GameTooltip:HookScript("OnTooltipSetUnit",FH.M.SetUnitTooltip)
+	hooksecurefunc(GameTooltip, "SetBagItem", FH.M.SetBagItemTooltip)
 	GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
+
+	hooksecurefunc(C_CVar, "SetCVar", FH.M.SetCVarHook)
 	
 end
 
@@ -99,6 +107,11 @@ end
 
 function FH.M.MerchantEvent(MerchantOpen)
 	FH.MerchantOpen = MerchantOpen
+end
+
+function FH.M.SetCVarHook(cvar, value)
+	if FH._i.cvarChanged then return end
+	FH._i.cvarOrig = value
 end
 
 local itemCounts = {}
@@ -129,6 +142,16 @@ local function AddCharacterCountLine(character, searchedID)
 	end
 end
 
+function FH.M.ParseGUID(guid)
+	if not guid or guid == "" then return end
+	local guidType, arg2, arg3, arg4, arg5, arg6, arg7 = ("-"):split(guid)
+	if guidType == "Creature" then
+		local _, serverID, instanceID, zoneUID, npc, spawnUID = arg2, arg3, arg4, arg5, arg6, arg7
+		local npcid = npc and tonumber(npc) or 0
+		return npcid, guidType
+	end
+end
+
 function FH.M.HideStockTip(tooltip)
 	local tooltip = tooltip or GameTooltip
 	if Farmhand.StockTip:IsOwned(tooltip) then
@@ -137,7 +160,93 @@ function FH.M.HideStockTip(tooltip)
 	end
 end
 
-function FH.M.SetMerchantItem(tooltip, slot)
+function FH.M.SetUnitTooltip(tooltip, unitid)
+	if not (FarmhandData.ShowStockTip and FH.InValley) then
+		return
+	end
+	local tooltip = tooltip or GameTooltip
+	local name,unitid = tooltip:GetUnit()
+	local npcid = FH.M.ParseGUID(UnitGUID(unitid or "none"))
+	if npcid and FH.NpcInfo[npcid] then
+		Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
+		Farmhand.StockTip:ClearAllPoints()
+		if FarmhandData.StockTipPosition == "BELOW" then
+			Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+		else
+			Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+		end
+		local info = FH.M.GetUnitTooltipData(npcid)
+		if info then
+			Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1)
+			Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1)
+			for material,amount in pairs(info.foodgift.craft) do
+				Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),nil,nil,nil,0.7,0.7,0.7)
+			end
+			Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1)
+			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
+			Farmhand.StockTip:Show()
+		end
+	else
+		FH.M.HideStockTip(tooltip)
+	end
+end
+
+function FH.M.SetBagItemTooltip(tooltip, bag, slot)
+	if not (FarmhandData.ShowStockTip) then return end
+	local tooltip = tooltip or GameTooltip
+	local itemID = FH.GetContainerItemID(bag, slot)
+	if not itemID then return end
+	if not (FH.TurninGift[itemID] or FH.TurninFood[itemID] or FH.FoodGiftIngredient) then return end
+	Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
+	Farmhand.StockTip:ClearAllPoints()
+	if FarmhandData.StockTipPosition == "BELOW" then
+		Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+	else
+		Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+	end
+	if FH.TurninGift[itemID] then
+		local info = FH.M.GetBagItemTooltipData(itemID)
+		if info then
+			for npcid,data in pairs(info) do
+				Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
+				Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+			end
+			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
+			Farmhand.StockTip:Show()
+		end
+	elseif FH.TurninFood[itemID] then
+		local info = FH.M.GetBagItemTooltipData(itemID)
+		if info then
+			if info.craft then
+				for ingredient,amount in pairs(info.craft) do
+					Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),nil,nil,nil,0.7,0.7,0.7)
+				end
+			end
+			for npcid,data in pairs(info) do
+				if npcid ~= "craft" then
+					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
+					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+				end
+			end
+			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
+			Farmhand.StockTip:Show()
+		end
+	elseif FH.FoodGiftIngredient[itemID] then
+		local info = FH.M.GetBagItemTooltipData(itemID)
+		if info then
+			for foodgift,data in pairs(info) do
+				Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7)
+				Farmhand.StockTip:AddDoubleLine(" ",data.npc,nil,nil,nil,0,1,0)
+			end
+			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
+			Farmhand.StockTip:Show()
+		end
+	else
+		FH.M.HideStockTip(tooltip)
+	end
+end
+
+function FH.M.SetMerchantItemTooltip(tooltip, slot)
 	if ( MerchantFrame.selectedTab == 1 ) and FarmhandData.ShowStockTip and FH.MerchantOpen then
 		local tooltip = tooltip or GameTooltip
 		local ItemID = GetMerchantItemID(slot)
@@ -156,13 +265,13 @@ function FH.M.SetMerchantItem(tooltip, slot)
 			local icon = FH.GetItemIcon(VeggieID)
 			icon = icon and "|T"..icon..":14:14:0:0:32:32:3:29:3:29|t" or "??"
 			veggieName = veggieName and icon.." "..veggieName or icon.." ".."ItemID: "..VeggieID
-			--print(VeggieID, veggieName, onHand, inBank,icon)
-			Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE");
-			Farmhand.StockTip:ClearAllPoints();
+
+			Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
+			Farmhand.StockTip:ClearAllPoints()
 			if FarmhandData.StockTipPosition == "BELOW" then
-				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0);
+				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
 			else
-				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0);
+				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
 			end
 			Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,1,0)
 
@@ -214,8 +323,9 @@ function FH.M.ZoneChanged()
 	local InSunsong = SubZone == L["Sunsong Ranch"]
 	local InMarket = SubZone == L["The Halfhill Market"]
 	local InHalfhill = InSunsong or InMarket or SubZone == L["Halfhill"] or Zone == L["Halfhill"]
+	local ShowTurnins = FarmhandData.ShowTurnins and FH.M.CheckInValley()
 	
-	if not InHalfhill and not FH.InHalfhill then return end
+	if not (InHalfhill or FH.InHalfhill or ShowTurnins) then return end
 
 	local LeavingHalfhill = not InHalfhill and FH.InHalfhill
 
@@ -225,9 +335,7 @@ function FH.M.ZoneChanged()
 	local EnteringMarket = InMarket and not FH.InMarket
 	local LeavingMarket = not InMarket and FH.InMarket
 	
-	
-	if (LeavingSunsong or LeavingMarket) and not (EnteringSunsong or EnteringMarket) then
-		--print("Leaving Sunsong area. Hiding Farmhand")
+	if ((LeavingSunsong or LeavingMarket) and not (EnteringSunsong or EnteringMarket)) then
 		Farmhand:UnregisterEvent("BAG_UPDATE_DELAYED")
 		Farmhand:UnregisterEvent("MERCHANT_SHOW")
 		Farmhand:UnregisterEvent("MERCHANT_CLOSED")
@@ -235,23 +343,29 @@ function FH.M.ZoneChanged()
 		FarmhandSeeds:Hide()
 		FarmhandTools:Hide()
 		FarmhandPortals:Hide()
-		Farmhand:Hide()
-		UnregisterStateDriver(Farmhand,"visibility")
+		if not ShowTurnins then
+			FarmhandTurnins:Hide()
+			Farmhand:Hide()
+			UnregisterStateDriver(Farmhand,"visibility")
+		end
 	end
 	
-	if (EnteringSunsong or EnteringMarket) and not (FH.InSunsong or FH.InMarket) then
-		--print("Entering Sunsong area. Updating Farmhand.")
+	if ((EnteringSunsong or EnteringMarket) and not (FH.InSunsong or FH.InMarket)) or ShowTurnins then
 		Farmhand:RegisterEvent("BAG_UPDATE_DELAYED")
-		Farmhand:RegisterEvent("MERCHANT_SHOW")
-		Farmhand:RegisterEvent("MERCHANT_CLOSED")
-		Farmhand:RegisterEvent("MERCHANT_UPDATE")
-		FarmhandSeeds:Show()
+		if ((EnteringSunsong or EnteringMarket) and not (FH.InSunsong or FH.InMarket)) then
+			Farmhand:RegisterEvent("MERCHANT_SHOW")
+			Farmhand:RegisterEvent("MERCHANT_CLOSED")
+			Farmhand:RegisterEvent("MERCHANT_UPDATE")
+			FarmhandSeeds:Show()
+		end
+		if ShowTurnins then
+			FarmhandTurnins:Show()
+		end
 		Farmhand:Show()
 
 		if FarmhandData.HideInCombat then
 			RegisterStateDriver(Farmhand,"visibility","[combat]hide;show")
 		end
-		
 	end
 	
 	if EnteringSunsong then
@@ -259,16 +373,24 @@ function FH.M.ZoneChanged()
 		if FarmhandData.ShowPortals then FarmhandPortals:Show() end
 		Farmhand:RegisterEvent("BAG_UPDATE_COOLDOWN")
 	elseif LeavingSunsong then
-		Farmhand:UnregisterEvent("BAG_UPDATE_COOLDOWN")
+		if not ShowTurnins then
+			Farmhand:UnregisterEvent("BAG_UPDATE_COOLDOWN")
+		end
 		FarmhandTools:Hide()
 		FarmhandPortals:Hide()
 	end
 	
-	if EnteringSunsong or EnteringMarket then
+	if EnteringSunsong or EnteringMarket or ShowTurnins then
 		Farmhand:Show()
 		FH.M.Update()
 	end
 	
+	if FarmhandData.DarkSoilHelpers then
+		FH.M.SetDarkSoilHelpers()
+	else
+		FH.M.ResetDarkSoilHelpers()
+	end
+
 	if LeavingHalfhill then
 		--FH.M.DropTools() -- protected action in classic
 	end
@@ -277,6 +399,75 @@ function FH.M.ZoneChanged()
 	FH.InMarket = InMarket
 	FH.InSunsong = InSunsong
 	
+end
+
+function FH.M.LootDarkSoil(autoLoot)
+	local numLoot = GetNumLootItems()
+  if numLoot == 0 then return end
+  local autoLooting = autoLoot or (GetCVarBool("autoLootDefault") ~= IsModifiedClick("AUTOLOOTTOGGLE"))
+  for slot=numLoot,1,-1 do
+  	if LootSlotHasItem(slot) then
+  		local itemLink = GetLootSlotLink(slot)
+  		if (itemLink) then
+  			local itemID = C_Item.GetItemInfoInstant(itemLink)
+  			if itemID and FH.DarkSoil.contents[itemID] then
+  				if not autoLooting then
+  					LootSlot(slot)
+  				end
+          ConfirmLootSlot(slot)
+          local dialog = StaticPopup_FindVisible("LOOT_BIND")
+          if dialog then _G[dialog:GetName().."Button1"]:Click() end
+  			end
+  		end
+  	end
+  end
+end
+
+function FH.M.SetDarkSoilHelpers()
+	if FH.M.CheckInValley() then
+		FH._i.cvarChanged = true
+		C_CVar.SetCVar("graphicsGroundClutter","0")
+		C_Timer.After(0.2, function() FH._i.cvarsChanged = false end)
+		Farmhand:RegisterEvent("LOOT_READY")
+		if not FH._i.tooltipHook then
+			GameTooltip:HookScript("OnShow", FH.M.SearchInTooltip)
+		end
+		FH._i.searchTooltip = true
+	else
+		FH.M.ResetDarkSoilHelpers()
+	end
+end
+
+function FH.M.ResetDarkSoilHelpers(logout)
+	local default = C_CVar.GetCVarDefault("graphicsGroundClutter")
+	if not logout then
+		FH._i.cvarChanged = true
+	end
+	C_CVar.SetCVar("graphicsGroundClutter",(FH._i.cvarOrig or default))
+	C_Timer.After(0.2, function() FH._i.cvarsChanged = false end)
+	Farmhand:UnregisterEvent("LOOT_READY")
+	FH._i.searchTooltip = false
+end
+
+function FH.M.CheckInValley()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local mapInfo = C_Map.GetMapInfo(mapID)
+	FH.InValley = false
+	if mapID and mapInfo then
+		if mapID == ValleyMapID then
+			FH.InValley = true
+			return FH.InValley
+		else
+			if mapInfo.mapType == Enum.UIMapType.Micro then
+				mapID = mapInfo.parentMapID
+				if mapID == ValleyMapID then
+					FH.InValley = true
+					return FH.InValley
+				end
+			end
+		end
+	end
+	return FH.InValley
 end
 
 function FH.M.ItemPreClick(Button,MouseButton,Down)
@@ -288,8 +479,10 @@ function FH.M.ItemPreClick(Button,MouseButton,Down)
 			Button:SetAttribute("type","macro")
 			Button:SetAttribute("macrotext","/targetexact "..L["Tilled Soil"].."\n/use "..Bag.." "..Slot)
 		else
-			Button:SetAttribute("type","item")
-			Button:SetAttribute("item",Bag.." "..Slot)
+			if Button.ItemType ~= "Turnin" then
+				Button:SetAttribute("type","item")
+				Button:SetAttribute("item",Bag.." "..Slot)
+			end
 		end
 	end
 end
@@ -297,9 +490,22 @@ end
 function FH.M.ItemPostClick(Button,MouseButton,Down)
 	if Down then return end
 	if not InCombatLockdown() then
-		Button:SetAttribute("type","item")
-		Button:SetAttribute("item","item:"..Button.ItemID)
+		if Button.ItemType ~= "Turnin" then
+			Button:SetAttribute("type","item")
+			Button:SetAttribute("item","item:"..Button.ItemID)
+		end
 		Button:SetAttribute("shift-item*","")
+	end
+	if Button.ItemType == "Turnin" then
+		if MouseButton == "LeftButton" then
+			if FH.M.AddGiftWaypoint and Button.ItemID then
+				FH.M.AddGiftWaypoint(Button.ItemID)
+			end
+		elseif MouseButton == "RightButton" then
+			if FH.M.RemoveGiftWaypoint and Button.ItemID then
+				FH.M.RemoveGiftWaypoint(Button.ItemID)
+			end
+		end
 	end
 end
 
@@ -309,6 +515,9 @@ function FH.M.ItemOnEnter(Button)
 	end
 	GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
 	GameTooltip:SetBagItem(Button.Bag,Button.Slot)
+	if Button.ItemType == "Turnin" then
+		GameTooltip:AddDoubleLine(L["Left-Click for Directions"],L["Right-Click to Clear"])
+	end
 	GameTooltip:Show()
 end
 
@@ -319,13 +528,42 @@ function FH.M.ItemOnLeave(Button)
 	GameTooltip_Hide()
 end
 
+function FH.M.AlertWithThrottle(interval)
+	local now = GetTime()
+	if (not FH._i.lastAlert) or ((now - FH._i.lastAlert) > interval) then
+		FH._i.lastAlert = now
+		if FarmhandData.PlayScannerSounds then
+			PlaySoundFile(567574,"SFX")
+		end
+		if FarmhandData.PrintScannerMessages then
+			local msg = format("Found "..GREEN.."%s|r Nearby.",FH.DarkSoil.name)
+			FH.M.Print(msg)
+		end
+	end
+end
+
+function FH.M.SearchInTooltip(self)
+	local self = self or GameTooltip
+	if not FH._i.searchTooltip then return end
+	if self:GetItem() or self:GetSpell() or self:GetUnit() then return end
+	if WorldMapFrame and WorldMapFrame:IsVisible() and WorldMapFrame:IsMouseOver() then return end
+	if WatchFrame and WatchFrame:IsVisible() and WatchFrame:IsMouseOver() then return end
+	if Minimap and Minimap:IsVisible() and Minimap:IsMouseOver() then return end
+	local chatFrame = (DEFAULT_CHAT_FRAME or SELECTED_CHAT_FRAME)
+	if chatFrame:IsVisible() and chatFrame:IsMouseOver() then return end
+	local fString = _G[self:GetName().."TextLeft1"]
+	local leftText = fString and fString.GetText and fString:GetText() or ""
+	if leftText and strfind(leftText, FH.DarkSoil.name) then
+		FH.M.AlertWithThrottle(5)
+		return true
+	end
+end
+
 function FH.M.ButtonOnMouseDown(Button, MouseButton)
 	if IsShiftKeyDown() and MouseButton == "LeftButton" and not Farmhand.isMoving then
 		_,_,_, Farmhand.InitialOffsetX, Farmhand.InitialOffsetY = Farmhand:GetPoint(1)
---		print("InitialOffsetX: "..Farmhand.InitialOffsetX.." InitialOffsetY: "..Farmhand.InitialOffsetY)
 		Farmhand:StartMoving()
 		_,_,_, Farmhand.PickupOffsetX, Farmhand.PickupOffsetY = Farmhand:GetPoint(1)
---		print("PickupOffsetX: "..Farmhand.PickupOffsetX.." PickupOffsetY: "..Farmhand.PickupOffsetY)
 		Farmhand.isMoving = true
 	elseif MouseButton == "RightButton" and Farmhand.isMoving then
 		Farmhand:StopMovingOrSizing()
@@ -338,12 +576,10 @@ end
 function FH.M.ButtonOnMouseUp(Button, MouseButton)
 	if MouseButton == "LeftButton" and Farmhand.isMoving then
 		local _,_,_, DropOffsetX, DropOffsetY = Farmhand:GetPoint(1)
---		print("DropOffsetX: "..DropOffsetX.." DropOffsetY: "..DropOffsetY)
 		Farmhand:StopMovingOrSizing()
 		Farmhand.isMoving = false
 		FarmhandData.X = DropOffsetX - Farmhand.PickupOffsetX + Farmhand.InitialOffsetX
 		FarmhandData.Y = DropOffsetY - Farmhand.PickupOffsetY + Farmhand.InitialOffsetY
---		print("FinalOffsetX: "..FarmhandData.X.." FinalOffsetY: "..FarmhandData.Y)
 		FH.M.RunAfterCombat(FH.M.ResetAnchors)
    end
 end
@@ -371,6 +607,15 @@ function FH.M.SetHideInCombatOption(Value)
 		RegisterStateDriver(Farmhand,"visibility","[combat]hide;show")
 	else
 		UnregisterStateDriver(Farmhand,"visibility")
+	end
+end
+
+function FH.M.SetDarkSoilOption(Value)
+	FarmhandData.DarkSoilHelpers = Value
+	if Value then
+		FH.M.SetDarkSoilHelpers()
+	else
+		FH.M.ResetDarkSoilHelpers()
 	end
 end
 
@@ -444,6 +689,19 @@ function FH.M.SetPortalsOption(Value)
 	end
 end
 
+function FH.M.SetTurninsOption(Value)
+	FarmhandData.ShowTurnins = Value
+	if Value then
+		if FH.M.CheckInValley() then
+			FarmhandTurnins:Show()
+		else
+			FarmhandTurnins:Hide()
+		end
+	else
+		FarmhandTurnins:Hide()
+	end
+end
+
 function FH.M.SetMiscToolsOption(Value, ItemID)
 	if ItemID == nil then
 		if Value then
@@ -512,10 +770,11 @@ function FH.M.UpdateBar(Bar)
 				if Button.ItemID then
 					Button.Bag, Button.Slot = FH.M.FindItemInBags(Button.ItemID)
 					if Bar.ShowItemCount then
+						local FoodGift = FH.TurninFood[Button.ItemID]
 						if ItemCount > 999 then
 							Button.Count:SetText("***")
 						else
-							Button.Count:SetText(ItemCount)
+							Button.Count:SetText(FoodGift and format("%d |cffff0000/|cff00ff005|r",ItemCount) or ItemCount)
 						end
 					end
 				end
@@ -558,17 +817,20 @@ function FH.M.Update()
 	FarmhandSeeds:Update()
 	FarmhandTools:Update()
 	FarmhandPortals:Update()
+	FarmhandTurnins:Update()
 	
 	local SBH = FarmhandSeeds:GetHeight() * FarmhandSeeds:GetScale()
 	local TBH = FarmhandTools:GetHeight() * FarmhandTools:GetScale()
 	local PBH = FarmhandPortals:GetHeight() * FarmhandPortals:GetScale()
-	local FHH = SBH + TBH + PBH -- + Farmhand.Backdrop:GetBackdrop().insets.top + Farmhand.Backdrop:GetBackdrop().insets.bottom
+	local IBH = FarmhandTurnins:GetHeight() * FarmhandTurnins:GetScale()
+	local FHH = SBH + TBH + PBH + IBH
 	Farmhand:SetHeight(FHH)
 	
 	local SBW = FarmhandSeeds:GetWidth() * FarmhandSeeds:GetScale()
 	local TBW = FarmhandTools:GetWidth() * FarmhandTools:GetScale()
 	local PBW = FarmhandPortals:GetWidth() * FarmhandPortals:GetScale()
-	local FHW = max(SBW,TBW,PBW) -- + Farmhand.Backdrop:GetBackdrop().insets.left + Farmhand.Backdrop:GetBackdrop().insets.right
+	local IBW = FarmhandTurnins:GetWidth() * FarmhandTurnins:GetScale()
+	local FHW = max(SBW,TBW,PBW,IBW)
 	Farmhand:SetWidth(FHW)
 
 end
@@ -587,7 +849,7 @@ end
 
 function FH.M.DropTools()
 	if FarmhandData.ToolsLocked then
-		print(L["Leaving Halfhill."].." "..L["Tools are Locked."])
+		FH.M.Print(L["Leaving Halfhill."].." "..L["Tools are Locked."])
 	else
 		ClearCursor()
 		for _, ItemID in ipairs(FH.Tools) do
@@ -597,7 +859,7 @@ function FH.M.DropTools()
 				if CursorHasItem() then
 					local _, ID, Link = GetCursorInfo()
 					if ID == ItemID then
-						print(L["Leaving Halfhill."].." "..L["Dropping"].." "..Link..".")
+						FH.M.Print(L["Leaving Halfhill."].." "..L["Dropping"].." "..Link..".")
 						DeleteCursorItem()
 					end
 				end
@@ -637,6 +899,12 @@ function FH.M.CombatEnded()
 	wipe(FH.PostCombatQueue)
 end
 
+function FH.M.Print(msg)
+	local chatFrame = (DEFAULT_CHAT_FRAME or SELECTED_CHAT_FRAME)
+	local out = LABEL..msg
+	chatFrame:AddMessage(out)
+end
+
 function FH.E.Mark(_,button,down)
 	if down then return end
 	local name = UnitExists("target") and UnitName("target") or ""
@@ -650,7 +918,7 @@ function FH.E.Mark(_,button,down)
 			local Icon = ICON_LIST[GetRaidTargetIndex("target")] and ICON_LIST[mark].."0|t" or ""
 			local msg = L["Crop Scanner found:"].." "..Icon.." "..name
 			if FarmhandData.PrintScannerMessages then
-				print(msg)
+				FH.M.Print(msg)
 				RaidNotice_AddMessage(RaidBossEmoteFrame,L["Some crops need attention!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
 			end
 			if FarmhandData.PlayScannerSounds then
@@ -662,7 +930,7 @@ function FH.E.Mark(_,button,down)
 	end
 	if not found then
 		if FarmhandData.PrintScannerMessages then
-			print(L["Crop Scanner finished."].." "..L["The crops are looking good!"])
+			FH.M.Print(L["Crop Scanner finished."].." "..L["The crops are looking good!"])
 			RaidNotice_AddMessage(RaidBossEmoteFrame,L["The crops are looking good!"], ChatTypeInfo["RAID_BOSS_EMOTE"])
 		end
 		if FarmhandData.PlayScannerSounds then

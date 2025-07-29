@@ -1,6 +1,7 @@
 local addonName, FH = ...
 local L = FH.L
-FH.M = FH.M or {}
+FH.M = FH.M or {} -- methods
+FH._i = FH._i or {} -- internal state
 local _
 
 local msq, msqGroups = nil, {}
@@ -11,12 +12,25 @@ if LibStub then
 			FarmhandTools = msq:Group(addonName,"Tools"),
 			FarmhandSeeds = msq:Group(addonName,"Seeds"),
 			FarmhandPortals = msq:Group(addonName,"Portals"),
+			FarmhandTurnins = msq:Group(addonName, "Turnins"),
 		}
 	end
 end
 
+local tomtomOpts = {
+	desc = "NPCName", -- placeholder
+	title = "NPCGifts", -- placeholder
+	from = addonName,
+	persistent = false,
+	minimap = true,
+	world = true,
+	crazy = true,
+	silent = false,
+	cleardistance = 20,
+	arrivaldistance = 10,
+}
+
 local function NewFarmhandButton(Name,Parent,ItemID,ItemType)
-	--print(Name,Parent,ItemID)
 	local f = CreateFrame("Button", Name, Parent, "SecureActionButtonTemplate")
 	f:SetSize(32,32)
 	f:SetPushedTexture([[Interface\Buttons\UI-Quickslot-Depress]])
@@ -41,8 +55,10 @@ local function NewFarmhandButton(Name,Parent,ItemID,ItemType)
 		f.ItemID = ItemID
 		f:SetAttribute("downbutton","ignore")
 		f:SetAttribute("*type-ignore", "")
-		f:SetAttribute("type","item")
-		f:SetAttribute("item","item:"..ItemID)
+		if ItemType ~= "Turnin" then
+			f:SetAttribute("type","item")
+			f:SetAttribute("item","item:"..ItemID)
+		end
 		f:SetScript("PreClick", FH.M.ItemPreClick)
 		f:SetScript("PostClick", FH.M.ItemPostClick)
 	end
@@ -62,7 +78,6 @@ local function CreateBarButtons(Bar, Items, ItemType)
 	local Buttons = Bar.Buttons
 	local indexOffset = #Buttons
 	for Index, ItemID in ipairs(Items) do
-		--print(Index,ItemID)
 		Index = Index + indexOffset
 		local Button = NewFarmhandButton(Bar:GetName().."Button"..Index, Bar, ItemID, ItemType)
 		tinsert(Buttons,Button)
@@ -76,7 +91,6 @@ local function CreateBarButtons(Bar, Items, ItemType)
 end
 
 local function NewMacroButton(Step, SubStep, MacroText)
-	--print("Creating ".."FHSBE_"..Step.."_"..SubStep)
 	local f = CreateFrame("Button", "FHSBE_"..Step.."_"..SubStep, FarmhandScanButton, "SecureActionButtonTemplate")
 	f:SetSize(32,32)
 	f:RegisterForClicks("AnyUp","AnyDown")
@@ -84,6 +98,58 @@ local function NewMacroButton(Step, SubStep, MacroText)
 	f:SetAttribute("macrotext", MacroText)
 	f:Hide()
 	return f
+end
+
+local function SetupTomTom()
+	if FH.M.AddGiftWaypoint and FH.M.RemoveGiftWaypoint and FH.M.RemoveAllWaypoints then
+		return
+	end
+	if TomTom.AddWaypoint then
+		FH.M.AddGiftWaypoint = function(gift)
+			if FarmhandData.PrintScannerMessages then
+				if not TomTom.profile.general.announce then
+					TomTom.profile.general.announce = true
+					C_Timer.After(0.2,function()
+						TomTom.profile.general.announce = false
+					end)
+				end
+			end
+			local data = FH.M.GetGiftTargets(gift)
+			if data then
+				for name,info in pairs(data) do
+					tomtomOpts["title"] = format("%s<%s %s",name,info.turnin,info.reward_txt)
+					tomtomOpts["desc"] = name
+					for _,loc in pairs(info.location) do
+						local map,x,y = loc[1],loc[2]/100,loc[3]/100
+						local waypoint = TomTom:AddWaypoint(map,x,y,tomtomOpts)
+						local key = TomTom:GetKey(waypoint)
+						FH._i.waypoints = FH._i.waypoints or {}
+						FH._i.waypoints[gift] = FH._i.waypoints[gift] or {}
+						FH._i.waypoints[gift][key] = waypoint
+					end
+				end
+			end
+		end
+	end
+	if TomTom.RemoveWaypoint then
+		FH.M.RemoveGiftWaypoint = function(gift)
+			if FH._i.waypoints then
+				local waypoints = FH._i.waypoints[gift]
+				if waypoints then
+					for key,waypoint in pairs(waypoints) do
+						TomTom:RemoveWaypoint(waypoint)
+					end
+				end
+			end
+		end
+		FH.M.RemoveAllWaypoints = function()
+			for reward,waypoints in pairs(FH._i.waypoints) do
+				for key,waypoint in pairs(waypoints) do
+					TomTom:RemoveWaypoint(waypoint)
+				end
+			end
+		end
+	end
 end
 
 local addonFrame = CreateFrame("Frame",addonName, UIParent, BackdropTemplateMixin and "BackdropTemplate")
@@ -101,17 +167,33 @@ addonFrame:RegisterEvent("ZONE_CHANGED")
 addonFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
 addonFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 addonFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+addonFrame:RegisterEvent("PLAYER_LOGOUT")
 addonFrame:SetScript("OnEvent",function(self,event,...)
 	if event == "ADDON_LOADED" then
 		local AddOn = ...
 		if AddOn == addonName then
-			FH.M.UpdateMiscToolOptionText()
-			FH.M.RunAfterCombat(FH.M.Initialize)
+			if not FH._i.initDone then
+				FH.M.UpdateMiscToolOptionText()
+				FH.M.RunAfterCombat(FH.M.Initialize)
+				FH._i.initDone = true
+			end
+		end
+		if AddOn == "TomTom" then
+			SetupTomTom()
+			FH._i.tomtomDone = true
+		end
+		if FH._i.initDone and FH._i.tomtomDone then
 			self:UnregisterEvent("ADDON_LOADED")
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" then
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 		FH.M.RunAfterCombat(FH.M.ZoneChanged)
+		local loading, loaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if loading and loaded then
+			SetupTomTom()
+		end
+	elseif event == "PLAYER_LOGOUT" then
+		FH.M.ResetDarkSoilHelpers(true)
 	elseif event == "ZONE_CHANGED_NEW_AREA" or
 		   event == "ZONE_CHANGED" or 
 		   event == "ZONE_CHANGED_INDOORS" then
@@ -130,6 +212,9 @@ addonFrame:SetScript("OnEvent",function(self,event,...)
 	elseif event == "GET_ITEM_INFO_RECEIVED" then
 		FH.M.UpdateMiscToolOptionText()
 		FH.M.UpdateButtonIcons(FarmhandSeeds)
+	elseif event == "LOOT_READY" then
+		local autoLoot = ...
+		FH.M.LootDarkSoil(autoLoot)
 	end
 end)
 
@@ -158,13 +243,25 @@ toolFrame:Hide()
 CreateBarButtons(toolFrame, FH.Tools, "FarmTool")
 CreateBarButtons(toolFrame, FH.MiscTools, "MiscTool")
 
+local turninFrame = CreateFrame("Frame","FarmhandTurnins",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
+turninFrame.tex = turninFrame:CreateTexture()
+turninFrame.tex:SetAllPoints()
+turninFrame.tex:SetColorTexture(0,1,0,0.5)
+turninFrame.tex:Hide()
+turninFrame:ClearAllPoints()
+turninFrame:SetPoint("TOP",toolFrame,"BOTTOM",0,0)
+turninFrame:SetScale(.75)
+turninFrame:Hide()
+CreateBarButtons(turninFrame, FH.Turnins, "Turnin")
+turninFrame.ShowItemCount = true
+
 local portalFrame = CreateFrame("Frame","FarmhandPortals",Farmhand, BackdropTemplateMixin and "BackdropTemplate")
 portalFrame.tex = portalFrame:CreateTexture()
 portalFrame.tex:SetAllPoints()
 portalFrame.tex:SetColorTexture(0,0,1,0.5)
 portalFrame.tex:Hide()
 portalFrame:ClearAllPoints()
-portalFrame:SetPoint("TOP",toolFrame,"BOTTOM",0,0)
+portalFrame:SetPoint("TOP",turninFrame,"BOTTOM",0,0)
 portalFrame:SetScale(.75)
 portalFrame:Hide()
 CreateBarButtons(portalFrame, FH.Portals, "Portal")
@@ -215,27 +312,37 @@ FarmhandToolsLockOptionText:SetText(L["Lock tools to prevent them being dropped 
 f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",50,-50)-- FarmhandToolsLockOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetMessagesOption(self:GetChecked()) end)
-FarmhandMessagesOptionText:SetText(L["Show crop scanner findings in the chat window."])
+FarmhandMessagesOptionText:SetText(L["Show info messages in the chat window."])
 
 f = CreateFrame("CheckButton","FarmhandSoundsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",FarmhandMessagesOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetSoundsOption(self:GetChecked()) end)
-FarmhandSoundsOptionText:SetText(L["Play sounds when crop scanner finishes."])
+FarmhandSoundsOptionText:SetText(L["Play notification sounds."])
 
 f = CreateFrame("CheckButton","FarmhandPortalsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",FarmhandSoundsOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetPortalsOption,{self:GetChecked()}) end)
 FarmhandPortalsOptionText:SetText(L["Show Portal Shard icons below the tools buttons."])
 
-f = CreateFrame("CheckButton","FarmhandHideInCombatOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+f = CreateFrame("CheckButton","FarmhandTurninsOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",FarmhandPortalsOption,"BOTTOMLEFT",0,-15)
+f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetTurninsOption,{self:GetChecked()}) end)
+FarmhandTurninsOptionText:SetText(L["Show Turn-in icons below the tools buttons."])
+
+f = CreateFrame("CheckButton","FarmhandHideInCombatOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+f:SetPoint("TOPLEFT",FarmhandTurninsOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetHideInCombatOption,{self:GetChecked()}) end)
 FarmhandHideInCombatOptionText:SetText(L["Hide Farmhand entirely during combat."])
 
-f = CreateFrame("CheckButton","FarmhandStockTipOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+f = CreateFrame("CheckButton","FarmhandDarkSoilOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",FarmhandHideInCombatOption,"BOTTOMLEFT",0,-15)
+f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetDarkSoilOption,{self:GetChecked()}) end)
+FarmhandDarkSoilOptionText:SetText(L["Easy Dark Soil (decluter, ping, autoloot)."])
+
+f = CreateFrame("CheckButton","FarmhandStockTipOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+f:SetPoint("TOPLEFT",FarmhandDarkSoilOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetStockTipOption,{self:GetChecked()}) end)
-FarmhandStockTipOptionText:SetText(L["Show special tooltip for vegetable seeds in merchant window."])
+FarmhandStockTipOptionText:SetText(L["Show extra tooltip (merchant, faction npcs, gifts)"])
 
 f = CreateFrame("Frame", "FarmhandStockTipPositionDropdown", FarmhandOptionsPanel, "UIDropDownMenuTemplate")
 f:SetPoint("TOPLEFT",FarmhandStockTipOption,"BOTTOMLEFT",10,0)
@@ -288,5 +395,11 @@ function FH.M.UpdateMiscToolOptionText()
 end
 
 local f = CreateFrame("GameTooltip","FarmhandScanningTooltip",nil,"GameTooltipTemplate")
-f:SetOwner( WorldFrame, "ANCHOR_NONE" );
+f:SetOwner( WorldFrame, "ANCHOR_NONE" )
 FH.ScanningTooltip = f
+local addonUpper, addonLower = addonName:upper(), addonName:lower()
+_G["SLASH_"..addonUpper.."1"] = "/"..addonLower
+_G["SLASH_"..addonUpper.."2"] = "/fh"
+SlashCmdList[addonUpper] = function(msg, editbox)
+	Settings.OpenToCategory(FH.optionsCategory:GetID())
+end

@@ -23,15 +23,15 @@ L["Mail"] = "Mail"
 L["Occupied Soil"] = "Occupied Soil"
 L["On Hand"] = "On Hand"
 L["ParchedCropNames"] = "Parched"
-L["Play sounds when crop scanner finishes."] = "Play sounds when crop scanner finishes."
+L["Play notification sounds."] = "Play notification sounds."
 L["Produces"] = "Produces"
 L["Right of Normal Tooltip"] = "Right of Normal Tooltip"
 L["RuntyCropNames"] = "Runty"
 L["Scan your farm for crops or soil that need attention."] = "Scan your farm for crops or soil that need attention."
-L["Show crop scanner findings in the chat window."] = "Show crop scanner findings in the chat window."
+L["Show info messages in the chat window."] = "Show info messages in the chat window."
 L["Show Optional Miscellaneous Tools"] = "Show Optional Miscellaneous Tools"
 L["Show Portal Shard icons below the tools buttons."] = "Show Portal Shard icons below the tools buttons."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Show special tooltip for vegetable seeds in merchant window."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Show extra tooltip (merchant, faction npcs, gifts)"
 L["Show Vegetable Icon on Seed Bag Buttons"] = "Show Vegetable Icon on Seed Bag Buttons"
 L["Show Vegetable Icon on Seed Buttons"] = "Show Vegetable Icon on Seed Buttons"
 L["SmotheredCropNames"] = "Smothered"
@@ -73,6 +73,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Dark Soil"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 
 if GetLocale() == "ptBR" then
@@ -150,7 +158,7 @@ Rapteira Ressequida
 Raiz-de-cobra Ressequida
 Cactus Cortavento Ressequido
 Campainha Ressequida]=] -- Needs review
-L["Play sounds when crop scanner finishes."] = "Tocar um som quando o rastreamento de vegetais finalizar." -- Needs review
+L["Play notification sounds."] = "Tocar um som quando o rastreamento de vegetais finalizar." -- Needs review
 L["Produces"] = "Produz"
 L["Right of Normal Tooltip"] = "À direita da Tooltip Normal."
 L["RuntyCropNames"] = [=[Nabo Rosa Raquítico
@@ -171,9 +179,9 @@ Raiz-de-cobra Nanica
 Cactus Cortavento Nanico
 Campainha Nanica]=] -- Needs review
 L["Scan your farm for crops or soil that need attention."] = "Procura vegetais ou solo que precisam de atenção em sua fazenda."
-L["Show crop scanner findings in the chat window."] = "Mostrar os vegetais encontrados pelo rastreador na janela de chat." -- Needs review
+L["Show info messages in the chat window."] = "Mostrar os vegetais encontrados pelo rastreador na janela de chat." -- Needs review
 L["Show Portal Shard icons below the tools buttons."] = "Mostrar ícones de fragmentos de portal abaixo dos botões de ferramentas." -- Needs review
-L["Show special tooltip for vegetable seeds in merchant window."] = "Mostrar tooltip especial para sementes de vegetais na janela de comércio." -- Needs review
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Mostrar tooltip especial para sementes de vegetais na janela de comércio." -- Needs review
 L["SmotheredCropNames"] = [=[Nabo Rosa Sufocado
 Repolho Verde Sufocado
 Cenoura Mordelícia Sufocada
@@ -262,6 +270,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Solo Negro"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "frFR" then
 L["AH"] = "HV"
@@ -340,7 +356,7 @@ Navet rose desséché
 Poireau à fleur rouge desséché
 Serpencine desséchée
 Sorcielles desséchées]=]
-L["Play sounds when crop scanner finishes."] = "Jouer un son quand l'analyse est terminée."
+L["Play notification sounds."] = "Jouer un son quand l'analyse est terminée."
 L["Produces"] = "produit"
 L["Right of Normal Tooltip"] = "A droite de l'infobulle standard"
 L["RuntyCropNames"] = [=[Bulbemage rabougri
@@ -360,10 +376,10 @@ Poireau à fleur rouge rabougri
 Serpencine rabougrie
 Sorcielles rabougries]=]
 L["Scan your farm for crops or soil that need attention."] = "Analyse votre ferme à la recherche de cultures ou de terres ayant besoin d'attention."
-L["Show crop scanner findings in the chat window."] = "Afficher les résultats de l'analyse dans la fenêtre de discussion."
+L["Show info messages in the chat window."] = "Afficher les résultats de l'analyse dans la fenêtre de discussion."
 L["Show Optional Miscellaneous Tools"] = "Montrer les outils optionnels" -- Needs review
 L["Show Portal Shard icons below the tools buttons."] = "Afficher les icônes d'Éclats de portail sous celles des outils."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Afficher une infobulle spéciale pour les graines de légumes chez le marchand."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Afficher une infobulle spéciale pour les graines de légumes chez le marchand."
 L["Show Vegetable Icon on Seed Bag Buttons"] = "Montrer les icônes des végétaux sur les boutons du sac de graines" -- Needs review
 L["Show Vegetable Icon on Seed Buttons"] = "Montrer les icônes des végétaux sur les boutons de graines" -- Needs review
 L["SmotheredCropNames"] = [=[Bulbemage étouffé
@@ -450,6 +466,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Terre sombre"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "deDE" then
 L["AH"] = "AH"
@@ -473,15 +497,15 @@ L["Mail"] = "Post"
 L["Occupied Soil"] = "Beanspruchter Boden"
 L["On Hand"] = "Im Besitz"
 L["ParchedCropNames"] = "Ausgetrocknete"
-L["Play sounds when crop scanner finishes."] = "Spiele einen Ton ab wenn der Pflanzen Scan beendet ist."
+L["Play notification sounds."] = "Spiele einen Ton ab wenn der Pflanzen Scan beendet ist."
 L["Produces"] = "Produziert"
 L["Right of Normal Tooltip"] = "Rechts vom Normalen Hinweistext"
 L["RuntyCropNames"] = "Verkümmerte"
 L["Scan your farm for crops or soil that need attention."] = "Scanne die Farm nach Boden und Pflanzen die Pflege benötigen."
-L["Show crop scanner findings in the chat window."] = "Zeige die Pflanzen Scanner ergebnisse im Chatfenster"
+L["Show info messages in the chat window."] = "Zeige die Pflanzen Scanner ergebnisse im Chatfenster"
 L["Show Optional Miscellaneous Tools"] = "Optional diverse Tools anzeigen"
 L["Show Portal Shard icons below the tools buttons."] = "Zeige Portalsplitter Symbole unterhalb der Werkzeugleiste"
-L["Show special tooltip for vegetable seeds in merchant window."] = "Zeige den speziellen Hinweistext für Gemüsesaatgut im Händlerfenster."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Zeige den speziellen Hinweistext für Gemüsesaatgut im Händlerfenster."
 L["Show Vegetable Icon on Seed Bag Buttons"] = "Zeige das Gemüse Symbol auf dem Saatgut Beutel Knopf"
 L["Show Vegetable Icon on Seed Buttons"] = "Zeige das Gemüse Symbol auf dem Samen Knopf"
 L["SmotheredCropNames"] = "Bedeckte"
@@ -508,6 +532,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Dunkle Erde"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "itIT" then
 L["AH"] = "AH" -- Needs review
@@ -591,7 +623,7 @@ Foglia Carnivora Inaridita
 Radiserpe Inaridita
 Fiorsonoro Inaridito
 Cactus di Tagliavento Inaridito]=] -- Needs review
-L["Play sounds when crop scanner finishes."] = "Riproduci un suono quando l'analisi dei semi si è conclusa."
+L["Play notification sounds."] = "Riproduci un suono quando l'analisi dei semi si è conclusa."
 L["Produces"] = "Prodotto"
 L["Right of Normal Tooltip"] = "A destra del tooltip normale"
 L["RuntyCropNames"] = [=[Cavolo Verde Pigro
@@ -611,10 +643,10 @@ Radiserpe Pigra
 Fiorsonoro Pigro
 Cactus di Tagliavento Pigro]=] -- Needs review
 L["Scan your farm for crops or soil that need attention."] = "Analisi della tenuta per individuare raccolti o terreni che hanno bisogno di attenzione."
-L["Show crop scanner findings in the chat window."] = "Mostra il risultato dell'analisi dei semi nelle finestra di conversazione."
+L["Show info messages in the chat window."] = "Mostra il risultato dell'analisi dei semi nelle finestra di conversazione."
 L["Show Optional Miscellaneous Tools"] = "Mostra strumenti vari opzionali" -- Needs review
 L["Show Portal Shard icons below the tools buttons."] = "Mostra l'icona del Frammento del Portale sotto i bottoni delle attrezzature."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Mostra un tooltip speciale per i semi degli ortaggi nella finestra del mercante."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Mostra un tooltip speciale per i semi degli ortaggi nella finestra del mercante."
 L["Show Vegetable Icon on Seed Bag Buttons"] = "Mostra l'icona dei vegetali nei bottoni delle borsa dei semi" -- Needs review
 L["Show Vegetable Icon on Seed Buttons"] = "Mostra l'icona dei vegetali nei bottoni dei semi" -- Needs review
 L["SmotheredCropNames"] = [=[Cavolo Verde Oppresso
@@ -701,6 +733,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Dark Soil"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "koKR" then
 L["AH"] = "경매장"
@@ -724,15 +764,15 @@ L["Mail"] = "우편"
 L["Occupied Soil"] = "꿈틀거리는 흙"
 L["On Hand"] = "가방"
 L["ParchedCropNames"] = "바짝 마른"
-L["Play sounds when crop scanner finishes."] = "검사 완료시 효과음 재생"
+L["Play notification sounds."] = "검사 완료시 효과음 재생"
 L["Produces"] = "수확물"
 L["Right of Normal Tooltip"] = "툴팁 우측 표시"
 L["RuntyCropNames"] = "못 자란"
 L["Scan your farm for crops or soil that need attention."] = "관리가 필요한 농작물이나 흙이 있는지 검사합니다."
-L["Show crop scanner findings in the chat window."] = "검사 결과를 채팅창에 표시"
+L["Show info messages in the chat window."] = "검사 결과를 채팅창에 표시"
 L["Show Optional Miscellaneous Tools"] = "선택 가능한 기타 도구를 표시"
 L["Show Portal Shard icons below the tools buttons."] = "농기구 버튼 아래에 차원문 조각 표시"
-L["Show special tooltip for vegetable seeds in merchant window."] = "씨앗 구입시 툴팁에 보유수량 표시 추가"
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "씨앗 구입시 툴팁에 보유수량 표시 추가"
 L["Show Vegetable Icon on Seed Bag Buttons"] = "씨앗 주머니 버튼에 농작물 아이콘 표시"
 L["Show Vegetable Icon on Seed Buttons"] = "씨앗 버튼에 농작물 아이콘 표시"
 L["SmotheredCropNames"] = "잡초투성이"
@@ -759,6 +799,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "검은 토양"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "esMX" then
 L["AH"] = "Casa de subastas"
@@ -836,7 +884,7 @@ Melón a rayas mustio
 Naba blanca mustia
 Cactus Cortaviento mustio
 Morujas mustias]=]
-L["Play sounds when crop scanner finishes."] = "Reproducir sonidos cuando termine el análisis de cultivos."
+L["Play notification sounds."] = "Reproducir sonidos cuando termine el análisis de cultivos."
 L["Produces"] = "Produce"
 L["Right of Normal Tooltip"] = "A la derecha de la descripción emergente"
 L["RuntyCropNames"] = [=[Semilla enigma enana
@@ -856,10 +904,10 @@ Naba blanca enana
 Cactus Cortaviento enano
 Morujas enanas]=]
 L["Scan your farm for crops or soil that need attention."] = "Analiza cultivos o tierras que requieran atención en tu granja."
-L["Show crop scanner findings in the chat window."] = "Muestra los resultados del analisis de cultivos en la ventana de chat."
+L["Show info messages in the chat window."] = "Muestra los resultados del analisis de cultivos en la ventana de chat."
 L["Show Optional Miscellaneous Tools"] = "Mostrar las herramientas misceláneas opcionales"
 L["Show Portal Shard icons below the tools buttons."] = "Mostrar Fragmentos de Portal bajo los botones de herramientas."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Muestra descripciones emergentes para semillas de vegetales en la ventana de comercio."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Muestra descripciones emergentes para semillas de vegetales en la ventana de comercio."
 L["SmotheredCropNames"] = [=[Semilla enigma enraizada
 Repollo verde enraizado
 Calabacín de jade enraizado
@@ -944,6 +992,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Tierra oscura"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "ruRU" then
 L["AH"] = "Аукцион"
@@ -967,15 +1023,15 @@ L["Mail"] = "Почтовый ящик"
 L["Occupied Soil"] = "Занятая земля"
 L["On Hand"] = "В руках"
 L["ParchedCropNames"] = "Высохш"
-L["Play sounds when crop scanner finishes."] = "Издавать звук после завершения сканирования."
+L["Play notification sounds."] = "Издавать звук после завершения сканирования."
 L["Produces"] = "Производит"
 L["Right of Normal Tooltip"] = "Справа от обычной подсказки"
 L["RuntyCropNames"] = "Строптив"
 L["Scan your farm for crops or soil that need attention."] = "Проверить урожай и землю."
-L["Show crop scanner findings in the chat window."] = "Отображать результаты сканирования в окне чата."
+L["Show info messages in the chat window."] = "Отображать результаты сканирования в окне чата."
 L["Show Optional Miscellaneous Tools"] = "Отображать дополнительные инструменты."
 L["Show Portal Shard icons below the tools buttons."] = "Отображать значки нестабильных кристаллов портала под значками инструментов."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Отображать особые подсказки для семян в окне торговца."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Отображать особые подсказки для семян в окне торговца."
 L["SmotheredCropNames"] = "Чахл"
 L["Some crops need attention!"] = "Урожай требует внимания!"
 L["Stubborn Weed"] = "Упрямый сорняк"
@@ -1000,6 +1056,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Темная земля"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "zhCN" then
 L["AH"] = "拍卖行"
@@ -1038,15 +1102,15 @@ L["Mail"] = "邮箱"
 L["Occupied Soil"] = "被占据的"
 L["On Hand"] = "背包"
 L["ParchedCropNames"] = "干枯的"
-L["Play sounds when crop scanner finishes."] = "扫描完成后播放声音"
+L["Play notification sounds."] = "扫描完成后播放声音"
 L["Produces"] = "烹饪材料"
 L["Right of Normal Tooltip"] = "显示在提示右侧"
 L["RuntyCropNames"] = "矮小的"
 L["Scan your farm for crops or soil that need attention."] = "扫描农场土壤和作物是否需要清理"
-L["Show crop scanner findings in the chat window."] = "在聊天框中显示"
+L["Show info messages in the chat window."] = "在聊天框中显示"
 L["Show Optional Miscellaneous Tools"] = "显示可选择的其他工具"
 L["Show Portal Shard icons below the tools buttons."] = "在农具栏下方显示传送门碎片"
-L["Show special tooltip for vegetable seeds in merchant window."] = "在商人窗口中显示烹饪作物数量"
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "在商人窗口中显示烹饪作物数量"
 L["Show Vegetable Icon on Seed Bag Buttons"] = "在种子包按钮上显示对应种子的图标"
 L["Show Vegetable Icon on Seed Buttons"] = "在种子按钮上显示对应种子的图标"
 L["SmotheredCropNames"] = "闷死的"
@@ -1073,6 +1137,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "[Dark Soil]"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "esES" then
 L["AH"] = "Casa de subastas"
@@ -1150,7 +1222,7 @@ Melón a rayas mustio
 Naba blanca mustia
 Cactus Cortaviento mustio
 Morujas mustias]=]
-L["Play sounds when crop scanner finishes."] = "Reproducir sonidos cuando termine el análisis de cultivos."
+L["Play notification sounds."] = "Reproducir sonidos cuando termine el análisis de cultivos."
 L["Produces"] = "Produce"
 L["Right of Normal Tooltip"] = "A la derecha de la descripción normal"
 L["RuntyCropNames"] = [=[Semilla enigma enana
@@ -1170,10 +1242,10 @@ Naba blanca enana
 Cactus Cortaviento enano
 Morujas enanas]=]
 L["Scan your farm for crops or soil that need attention."] = "Analiza tus cultivos de tu granja que requieren atención."
-L["Show crop scanner findings in the chat window."] = "Muestra los resultados del analisis de cultivos en la ventana de chat."
+L["Show info messages in the chat window."] = "Muestra los resultados del analisis de cultivos en la ventana de chat."
 L["Show Optional Miscellaneous Tools"] = "Mostrar las herramientas misceláneas opcionales"
 L["Show Portal Shard icons below the tools buttons."] = "Mostrar iconos de Fragmento de portal debajo de los botones de herramientas."
-L["Show special tooltip for vegetable seeds in merchant window."] = "Muestra descripciones especiales para los semillas de vegetales en la ventana de comercio."
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "Muestra descripciones especiales para los semillas de vegetales en la ventana de comercio."
 L["SmotheredCropNames"] = [=[Semilla enigma enraizada
 Repollo verde enraizado
 Calabacín de jade enraizado
@@ -1258,6 +1330,14 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "Tierra oscura"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 elseif GetLocale() == "zhTW" then
 L["AH"] = "拍賣" -- Needs review
@@ -1281,15 +1361,15 @@ L["Mail"] = "郵件" -- Needs review
 L["Occupied Soil"] = "被佔用的土地"
 L["On Hand"] = "背包中" -- Needs review
 L["ParchedCropNames"] = "乾巴巴的"
-L["Play sounds when crop scanner finishes."] = "掃描完成後撥放音效"
+L["Play notification sounds."] = "掃描完成後撥放音效"
 L["Produces"] = "烹飪材料" -- Needs review
 L["Right of Normal Tooltip"] = "顯示在提示右側" -- Needs review
 L["RuntyCropNames"] = "發育不良的"
 L["Scan your farm for crops or soil that need attention."] = "掃描農場確認植物是否需要清理"
-L["Show crop scanner findings in the chat window."] = "在聊天框中顯示"
+L["Show info messages in the chat window."] = "在聊天框中顯示"
 L["Show Optional Miscellaneous Tools"] = "可選雜項工具" -- Needs review
 L["Show Portal Shard icons below the tools buttons."] = "在工具按鈕下方顯示傳送門碎片"
-L["Show special tooltip for vegetable seeds in merchant window."] = "交易視窗顯示蔬菜種子數量。" -- Needs review
+L["Show extra tooltip (merchant, faction npcs, gifts)"] = "交易視窗顯示蔬菜種子數量。" -- Needs review
 L["Show Vegetable Icon on Seed Bag Buttons"] = "顯示種子包裝袋上的圖標按鈕" -- Needs review
 L["Show Vegetable Icon on Seed Buttons"] = "顯示種子按鈕上的圖標" -- Needs review
 L["SmotheredCropNames"] = "快悶死的"
@@ -1316,5 +1396,13 @@ L["Smothered"] = "Smothered"
 L["Unstable"]  = "Unstable"
 L["Bursting"]  = "Bursting"
 L["Runty"]     = "Runty"
+L["Dark Soil"] = "[Dark Soil]"
+L["Show Turn-in icons below the tools buttons."] = "Show Turn-in icons below the tools buttons."
+L["Easy Dark Soil (decluter, ping, autoloot)."] = "Easy Dark Soil (decluter, ping, autoloot)."
+L["Left-Click for Directions"] = "Left-Click for Directions"
+L["Right-Click to Clear"] = "Right-Click to Clear"
+L["Likes"] = "Likes"
+L["Eats"] = "Eats"
+L["Best Friend"] = "Best Friend"
 
 end
