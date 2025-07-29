@@ -3,7 +3,7 @@ local L = FH.L
 FH.M = FH.M or {} -- methods
 FH.E = FH.E or {} -- exports
 FH._i = FH._i or {} -- internal state
-local ValleyMapID,_ = 376
+local ValleyMapID,PandariaContID,_ = 376,870
 
 local msq, msqGroups = nil, {}
 if LibStub then
@@ -36,8 +36,8 @@ local FarmhandDataDefaults = {
 	StockTipPosition = "BELOW",
 	ShowVeggieIconsForSeeds = false,
 	ShowVeggieIconsForBags = false,
-	DarkSoilHelpers = false,
-	ShowTurnins = false,
+	DarkSoilHelpers = true,
+	ShowTurnins = true,
 }
 
 function FH.M.Initialize()
@@ -451,7 +451,7 @@ end
 
 function FH.M.CheckInValley()
 	local mapID = C_Map.GetBestMapForUnit("player")
-	local mapInfo = C_Map.GetMapInfo(mapID)
+	local mapInfo = mapID and C_Map.GetMapInfo(mapID)
 	FH.InValley = false
 	if mapID and mapInfo then
 		if mapID == ValleyMapID then
@@ -468,6 +468,20 @@ function FH.M.CheckInValley()
 		end
 	end
 	return FH.InValley
+end
+
+function FH.M.CheckInPandaria()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local mapPosition = mapID and C_Map.GetPlayerMapPosition(mapID,"player")
+	FH.InPandaria = false
+	if mapID and mapPosition then
+		local contID, position = C_Map.GetWorldPosFromMapPos(mapID,mapPosition)
+		if contID and contID == PandariaContID then
+			FH.InPandaria = true
+			return FH.InPandaria
+		end
+	end
+	return FH.InPandaria
 end
 
 function FH.M.ItemPreClick(Button,MouseButton,Down)

@@ -101,9 +101,13 @@ local function NewMacroButton(Step, SubStep, MacroText)
 end
 
 local function SetupTomTom()
+	if FH._i.tomtomDone then return end
 	if FH.M.AddGiftWaypoint and FH.M.RemoveGiftWaypoint and FH.M.RemoveAllWaypoints then
+		FH._i.tomtomDone = true
 		return
 	end
+	local loading, loaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if not loaded then return end
 	if TomTom.AddWaypoint then
 		FH.M.AddGiftWaypoint = function(gift)
 			if FarmhandData.PrintScannerMessages then
@@ -180,17 +184,18 @@ addonFrame:SetScript("OnEvent",function(self,event,...)
 		end
 		if AddOn == "TomTom" then
 			SetupTomTom()
-			FH._i.tomtomDone = true
 		end
 		if FH._i.initDone and FH._i.tomtomDone then
 			self:UnregisterEvent("ADDON_LOADED")
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" then
-		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+		--self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 		FH.M.RunAfterCombat(FH.M.ZoneChanged)
-		local loading, loaded = C_AddOns.IsAddOnLoaded("TomTom")
-		if loading and loaded then
-			SetupTomTom()
+		if not FH._i.tomtomDone then
+			local loading, loaded = C_AddOns.IsAddOnLoaded("TomTom")
+			if loading and loaded then
+				SetupTomTom()
+			end
 		end
 	elseif event == "PLAYER_LOGOUT" then
 		FH.M.ResetDarkSoilHelpers(true)
@@ -294,14 +299,23 @@ if msqGroups["FarmhandTools"] then
 	msqGroups["FarmhandTools"]:AddButton(scanFrame)
 end
 
-local f = CreateFrame("Frame","FarmhandOptionsPanel",nil)
-f.name = addonName
+local optionPanel = CreateFrame("Frame","FarmhandOptionsPanel",nil)
+optionPanel.name = addonName
 if _G.InterfaceOptions_AddCategory then
-	InterfaceOptions_AddCategory(f)
+	InterfaceOptions_AddCategory(optionPanel)
 elseif Settings and Settings.RegisterCanvasLayoutCategory then
-  local cat = Settings.RegisterCanvasLayoutCategory(f, f.name)
+  local cat = Settings.RegisterCanvasLayoutCategory(optionPanel, optionPanel.name)
   FH.optionsCategory = cat
   Settings.RegisterAddOnCategory(cat)
+end
+optionPanel.OnRefresh = function()
+	FarmhandMessagesOption:SetChecked(FarmhandData.PrintScannerMessages)
+	FarmhandSoundsOption:SetChecked(FarmhandData.PlayScannerSounds)
+	FarmhandPortalsOption:SetChecked(FarmhandData.ShowPortals)
+	FarmhandTurninsOption:SetChecked(FarmhandData.ShowTurnins)
+	FarmhandHideInCombatOption:SetChecked(FarmhandData.HideInCombat)
+	FarmhandDarkSoilOption:SetChecked(FarmhandData.DarkSoilHelpers)
+	FarmhandStockTipOption:SetChecked(FarmhandData.ShowStockTip)
 end
 
 --[[f = CreateFrame("CheckButton","FarmhandToolsLockOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
@@ -309,7 +323,7 @@ f:SetPoint("TOPLEFT",50,-50)
 f:SetScript("OnClick",function(self) FH.M.SetLockToolsOption(self:GetChecked()) end)
 FarmhandToolsLockOptionText:SetText(L["Lock tools to prevent them being dropped when you leave the farm."])]]
 
-f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+local f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",50,-50)-- FarmhandToolsLockOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetMessagesOption(self:GetChecked()) end)
 FarmhandMessagesOptionText:SetText(L["Show info messages in the chat window."])
@@ -401,5 +415,31 @@ local addonUpper, addonLower = addonName:upper(), addonName:lower()
 _G["SLASH_"..addonUpper.."1"] = "/"..addonLower
 _G["SLASH_"..addonUpper.."2"] = "/fh"
 SlashCmdList[addonUpper] = function(msg, editbox)
-	Settings.OpenToCategory(FH.optionsCategory:GetID())
+	if not msg or msg:trim()=="" or (msg:find("?") or msg:find("help")) then
+		Settings.OpenToCategory(FH.optionsCategory:GetID())
+	else
+		msg = msg:lower()
+		local db = FarmhandData
+		if msg == "chat" or msg == "print" then
+			FH.M.SetMessagesOption(not db.PrintScannerMessages)
+		end
+		if msg == "sound" or msg == "silent" then
+			FH.M.SetSoundsOption(not db.PlayScannerSounds)
+		end
+		if msg == "extratip" or msg == "tooltip" or msg == "tip" then
+			FH.M.SetStockTipOption(not db.ShowStockTip)
+		end
+		if msg == "portals" or msg == "portal" then
+			FH.M.SetPortalsOption(not db.ShowPortals)
+		end
+		if msg == "turnins" or msg == "turnin" or msg == "turn" then
+			FH.M.SetTurninsOption(not db.ShowTurnins)
+		end
+		if msg == "combat" or msg == "hide" then
+			FH.M.SetHideInCombatOption(not db.HideInCombat)
+		end
+		if msg == "darksoil" or msg == "soil" then
+			FH.M.SetDarkSoilOption(not db.DarkSoilHelpers)
+		end
+	end
 end

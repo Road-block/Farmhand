@@ -2,14 +2,14 @@
 ## Title: Farmhand |T134435:16|t Classic
 ## Author: Roadblock (Classic)
 ## X-Author: JCinDE
-## Notes: Adds on-screen buttons for farming tools, seeds, turnins, portals.|nHelpers for Dark Soil, tooltip reminders for faction NPCs and Items.|nEnhanced navigation with TomTom (installed separately).
+## Notes: Adds on-screen buttons for farming tools, seeds, turnins, portals.|nHelpers for Dark Soil, tooltip reminders for faction NPCs and Items.|nEnhanced navigation with TomTom (installed separately).|n/farmhand or /fh for options.
 ## IconTexture: 609616
-## Version: 2.0.0
+## Version: 2.0.1
 ## SavedVariables: FarmhandData
 ## OptionalDeps: Masque, TipTac, DataStore, TomTom
 
 Localization.lua
-Data.lua
 Compat.lua
+Data.lua
 Farmhand.lua
 Frames.lua
