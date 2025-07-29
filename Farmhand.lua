@@ -896,6 +896,16 @@ function FH.M.FindItemInBags(ItemID)
 	end
 end
 
+function FH.M.TableCount(t)
+	local count = 0
+	if type(t)=="table" then
+		for k,v in pairs(table) do
+			count = count + 1
+		end
+	end
+	return count
+end
+
 FH.PostCombatQueue = {}
 function FH.M.RunAfterCombat(Func,Args)
 	if InCombatLockdown() then

@@ -368,7 +368,6 @@ function FH.M.GetUnitTooltipData(npcid)
 				icon = icon and "|T"..icon..":14:14:0:0:32:32:3:29:3:29|t" or ""
 				local link = FH.TurninLink[gift]
 				return_t.gift = link and (icon..link) or format("ItemID:%d",gift)
-				found = true
 			end
 			for foodgift,ingredients in pairs(npcData.FoodGifts) do
 				return_t.foodgift = return_t.foodgift or {}
@@ -414,10 +413,10 @@ function FH.M.GetBagItemTooltipData(itemid)
 	local foodgiftingredient = FH.FoodGiftIngredient[itemid]
 	local found
 	if gift then
+		return_t = wipe(return_t)
 		for npcid,data in pairs(gift) do
 			local _,_,maxed,reaction = FH.M.GetNPCStanding(npcid)
 			local icon = ""
-			return_t = wipe(return_t)
 			if not maxed then
 				found = true
 				icon = FH.FactionInfo[npcid].icon
