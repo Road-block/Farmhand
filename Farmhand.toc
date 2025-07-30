@@ -4,7 +4,7 @@
 ## X-Author: JCinDE
 ## Notes: Adds on-screen buttons for farming tools, seeds, turnins, portals.|nHelpers for Dark Soil, tooltip reminders for faction NPCs and Items.|nEnhanced navigation with TomTom (installed separately).|n/farmhand or /fh for options.
 ## IconTexture: 609616
-## Version: 2.0.3
+## Version: 2.0.4
 ## SavedVariables: FarmhandData
 ## OptionalDeps: Masque, TipTac, DataStore, TomTom
 

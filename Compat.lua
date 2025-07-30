@@ -60,6 +60,13 @@ local GetItemIcon = function(...)
     return _G.GetItemIcon(...)
   end
 end
+local GetItemInfoInstant = function(...)
+  if C_Item and C_Item.GetItemInfoInstant then
+    return C_Item.GetItemInfoInstant(...)
+  elseif _G.GetItemInfoInstant then
+    return _G.GetItemInfoInstant(...)
+  end
+end
 
 FH.ShowContainerSellCursor = ShowContainerSellCursor
 FH.GetContainerItemInfo = GetContainerItemInfo
@@ -69,3 +76,4 @@ FH.GetContainerItemID = GetContainerItemID
 FH.GetItemInfo = GetItemInfo
 FH.GetItemCount = GetItemCount
 FH.GetItemIcon = GetItemIcon
+FH.GetItemInfoInstant = GetItemInfoInstant

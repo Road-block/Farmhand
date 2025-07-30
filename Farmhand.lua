@@ -84,6 +84,7 @@ function FH.M.Initialize()
 	hooksecurefunc(GameTooltip, "SetMerchantItem", FH.M.SetMerchantItemTooltip)
 	GameTooltip:HookScript("OnTooltipSetUnit",FH.M.SetUnitTooltip)
 	hooksecurefunc(GameTooltip, "SetBagItem", FH.M.SetBagItemTooltip)
+	hooksecurefunc(GameTooltip, "SetTradeSkillItem", FH.M.SetTradSkillItemTooltip)
 	GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
 
 	hooksecurefunc(C_CVar, "SetCVar", FH.M.SetCVarHook)
@@ -152,6 +153,17 @@ function FH.M.ParseGUID(guid)
 	end
 end
 
+function FH.M.IsCookingOpen()
+	if not TradeSkillFrame:IsVisible() then return end
+	local prof1, prof2, arch, fishing, cooking, firstaid = GetProfessions()
+	if not cooking then return end
+	local cookingName = GetProfessionInfo(cooking)
+	local tradeSkill = GetTradeSkillLine()
+	if tradeSkill and cookingName and (tradeSkill == cookingName) then
+		return true
+	end
+end
+
 function FH.M.HideStockTip(tooltip)
 	local tooltip = tooltip or GameTooltip
 	if Farmhand.StockTip:IsOwned(tooltip) then
@@ -180,9 +192,42 @@ function FH.M.SetUnitTooltip(tooltip, unitid)
 			Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1)
 			Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1)
 			for material,amount in pairs(info.foodgift.craft) do
-				Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),nil,nil,nil,0.7,0.7,0.7)
+				Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7)
 			end
 			Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1)
+			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
+			Farmhand.StockTip:Show()
+		end
+	else
+		FH.M.HideStockTip(tooltip)
+	end
+end
+
+function FH.M.SetTradSkillItemTooltip(tooltip, skillIndex)
+	if not (FarmhandData.ShowStockTip) then return end
+	if not FH.M.IsCookingOpen() then return end
+	local tooltip = tooltip or GameTooltip
+	local itemlink = GetTradeSkillItemLink(skillIndex)
+	local _,ttItemlink = tooltip:GetItem()
+	local itemID = itemlink and FH.GetItemInfoInstant(itemlink)
+	local testID = ttItemlink and FH.GetItemInfoInstant(ttItemlink)
+	if itemID and testID and (itemID == testID) then
+		if not FH.TurninFood[itemID] then return end
+		Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
+		Farmhand.StockTip:ClearAllPoints()
+		if FarmhandData.StockTipPosition == "BELOW" then
+			Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+		else
+			Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+		end
+		local info = FH.M.GetBagItemTooltipData(itemID)
+		if info then
+			for npcid,data in pairs(info) do
+				if npcid ~= "craft" then
+					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
+					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+				end
+			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
 		end
@@ -219,7 +264,7 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		if info then
 			if info.craft then
 				for ingredient,amount in pairs(info.craft) do
-					Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),nil,nil,nil,0.7,0.7,0.7)
+					Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7)
 				end
 			end
 			for npcid,data in pairs(info) do
@@ -236,7 +281,7 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		if info then
 			for foodgift,data in pairs(info) do
 				Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7)
-				Farmhand.StockTip:AddDoubleLine(" ",data.npc,nil,nil,nil,0,1,0)
+				Farmhand.StockTip:AddDoubleLine(" ",data.npc,1,1,1,0,1,0)
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
@@ -311,7 +356,8 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
 
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
-
+		else
+			FH.M.HideStockTip(tooltip)
 		end
 	end
 end
