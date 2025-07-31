@@ -87,7 +87,7 @@ function FH.M.Initialize()
 	hooksecurefunc(GameTooltip, "SetTradeSkillItem", FH.M.SetTradSkillItemTooltip)
 	GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
 
-	hooksecurefunc(C_CVar, "SetCVar", FH.M.SetCVarHook)
+	hooksecurefunc(C_CVar, "SetCVar", FH.M.PostHookSetCVar)
 	
 end
 
@@ -110,8 +110,9 @@ function FH.M.MerchantEvent(MerchantOpen)
 	FH.MerchantOpen = MerchantOpen
 end
 
-function FH.M.SetCVarHook(cvar, value)
-	if FH._i.cvarChanged then return end
+function FH.M.PostHookSetCVar(cvar, value)
+	if not (cvar:lower() == "graphicsgroundclutter") then return end
+	if FH._i.cvarChanged then return end -- we only care for player changes
 	FH._i.cvarOrig = value
 end
 
@@ -192,7 +193,7 @@ function FH.M.SetUnitTooltip(tooltip, unitid)
 			Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1)
 			Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1)
 			for material,amount in pairs(info.foodgift.craft) do
-				Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7)
+				Farmhand.StockTip:AddDoubleLine("-",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7)
 			end
 			Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1)
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
@@ -264,7 +265,7 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		if info then
 			if info.craft then
 				for ingredient,amount in pairs(info.craft) do
-					Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7)
+					Farmhand.StockTip:AddDoubleLine("-",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7)
 				end
 			end
 			for npcid,data in pairs(info) do
@@ -281,7 +282,7 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		if info then
 			for foodgift,data in pairs(info) do
 				Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7)
-				Farmhand.StockTip:AddDoubleLine(" ",data.npc,1,1,1,0,1,0)
+				Farmhand.StockTip:AddDoubleLine("-",data.npc,1,1,1,0,1,0)
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
@@ -370,6 +371,12 @@ function FH.M.ZoneChanged()
 	local InMarket = SubZone == L["The Halfhill Market"]
 	local InHalfhill = InSunsong or InMarket or SubZone == L["Halfhill"] or Zone == L["Halfhill"]
 	local ShowTurnins = FarmhandData.ShowTurnins and FH.M.CheckInValley()
+
+	if FarmhandData.DarkSoilHelpers then
+		FH.M.SetDarkSoilHelpers()
+	else
+		FH.M.ResetDarkSoilHelpers()
+	end
 	
 	if not (InHalfhill or FH.InHalfhill or ShowTurnins) then return end
 
@@ -430,12 +437,6 @@ function FH.M.ZoneChanged()
 		Farmhand:Show()
 		FH.M.Update()
 	end
-	
-	if FarmhandData.DarkSoilHelpers then
-		FH.M.SetDarkSoilHelpers()
-	else
-		FH.M.ResetDarkSoilHelpers()
-	end
 
 	if LeavingHalfhill then
 		--FH.M.DropTools() -- protected action in classic
@@ -472,8 +473,12 @@ end
 function FH.M.SetDarkSoilHelpers()
 	if FH.M.CheckInValley() then
 		FH._i.cvarChanged = true
-		C_CVar.SetCVar("graphicsGroundClutter","0")
-		C_Timer.After(0.2, function() FH._i.cvarsChanged = false end)
+		local from = C_CVar.GetCVar("graphicsGroundClutter")
+		if from ~= "0" then
+			FH._i.cvarOrig = from
+			C_CVar.SetCVar("graphicsGroundClutter","0")
+			C_Timer.After(0.2, function() FH._i.cvarChanged = false end)
+		end
 		Farmhand:RegisterEvent("LOOT_READY")
 		if not FH._i.tooltipHook then
 			GameTooltip:HookScript("OnShow", FH.M.SearchInTooltip)
@@ -485,12 +490,13 @@ function FH.M.SetDarkSoilHelpers()
 end
 
 function FH.M.ResetDarkSoilHelpers(logout)
-	local default = C_CVar.GetCVarDefault("graphicsGroundClutter")
-	if not logout then
-		FH._i.cvarChanged = true
+	if FH._i.cvarOrig then
+		if not logout then
+			FH._i.cvarChanged = true
+		end
+		C_CVar.SetCVar("graphicsGroundClutter",FH._i.cvarOrig)
+		C_Timer.After(0.2, function() FH._i.cvarChanged = false end)
 	end
-	C_CVar.SetCVar("graphicsGroundClutter",(FH._i.cvarOrig or default))
-	C_Timer.After(0.2, function() FH._i.cvarsChanged = false end)
 	Farmhand:UnregisterEvent("LOOT_READY")
 	FH._i.searchTooltip = false
 end
@@ -970,6 +976,7 @@ function FH.M.CombatEnded()
 end
 
 function FH.M.Print(msg)
+	if not msg or msg:trim() == "" then return end
 	local chatFrame = (DEFAULT_CHAT_FRAME or SELECTED_CHAT_FRAME)
 	local out = LABEL..msg
 	chatFrame:AddMessage(out)
