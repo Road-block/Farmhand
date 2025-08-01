@@ -147,9 +147,11 @@ local function SetupTomTom()
 			end
 		end
 		FH.M.RemoveAllWaypoints = function()
-			for reward,waypoints in pairs(FH._i.waypoints) do
-				for key,waypoint in pairs(waypoints) do
-					TomTom:RemoveWaypoint(waypoint)
+			if FH._i.waypoints then
+				for reward,waypoints in pairs(FH._i.waypoints) do
+					for key,waypoint in pairs(waypoints) do
+						TomTom:RemoveWaypoint(waypoint)
+					end
 				end
 			end
 		end
@@ -309,6 +311,7 @@ elseif Settings and Settings.RegisterCanvasLayoutCategory then
   Settings.RegisterAddOnCategory(cat)
 end
 optionPanel.OnRefresh = function()
+	FarmhandMinimapHideOption:SetChecked(FarmhandData.minimap.hide)
 	FarmhandMessagesOption:SetChecked(FarmhandData.PrintScannerMessages)
 	FarmhandSoundsOption:SetChecked(FarmhandData.PlayScannerSounds)
 	FarmhandPortalsOption:SetChecked(FarmhandData.ShowPortals)
@@ -318,13 +321,13 @@ optionPanel.OnRefresh = function()
 	FarmhandStockTipOption:SetChecked(FarmhandData.ShowStockTip)
 end
 
---[[f = CreateFrame("CheckButton","FarmhandToolsLockOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+local f = CreateFrame("CheckButton","FarmhandMinimapHideOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",50,-50)
-f:SetScript("OnClick",function(self) FH.M.SetLockToolsOption(self:GetChecked()) end)
-FarmhandToolsLockOptionText:SetText(L["Lock tools to prevent them being dropped when you leave the farm."])]]
+f:SetScript("OnClick",function(self) FH.M.SetMinimapHideOption(self:GetChecked()) end)
+FarmhandMinimapHideOptionText:SetText(L["Hide Farmhand Minimap button."])
 
-local f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
-f:SetPoint("TOPLEFT",50,-50)-- FarmhandToolsLockOption,"BOTTOMLEFT",0,-15)
+f = CreateFrame("CheckButton","FarmhandMessagesOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+f:SetPoint("TOPLEFT", FarmhandMinimapHideOption,"BOTTOMLEFT",0,-15)
 f:SetScript("OnClick",function(self) FH.M.SetMessagesOption(self:GetChecked()) end)
 FarmhandMessagesOptionText:SetText(L["Show info messages in the chat window."])
 
@@ -414,7 +417,7 @@ FH.ScanningTooltip = f
 local addonUpper, addonLower = addonName:upper(), addonName:lower()
 _G["SLASH_"..addonUpper.."1"] = "/"..addonLower
 _G["SLASH_"..addonUpper.."2"] = "/fh"
-local optStatusON, optStatusOFF = "|cff00ff00On|r", "|cffff0000Off|r"
+local optStatusON, optStatusOFF = " |cff00ff00On|r", " |cffff0000Off|r"
 SlashCmdList[addonUpper] = function(msg, editbox)
 	if not msg or msg:trim()=="" then
 		Settings.OpenToCategory(FH.optionsCategory:GetID())
@@ -423,31 +426,31 @@ SlashCmdList[addonUpper] = function(msg, editbox)
 		local db = FarmhandData
 		if msg == "chat" or msg == "print" then
 			FH.M.SetMessagesOption(not db.PrintScannerMessages)
-			FH.M.Print(L["Chat info messages:"]..(db.PrintScannerMessages and optStatusON or optStatusOFF))
+			FH.M.Print(L["Chat info messages"]..(db.PrintScannerMessages and optStatusON or optStatusOFF))
 		end
 		if msg == "sound" or msg == "silent" then
 			FH.M.SetSoundsOption(not db.PlayScannerSounds)
-			FH.M.Print(L["Notification sounds:"]..(db.PlayScannerSounds and optStatusON or optStatusOFF))
+			FH.M.Print(L["Notification sounds"]..(db.PlayScannerSounds and optStatusON or optStatusOFF))
 		end
 		if msg == "extratip" or msg == "tooltip" or msg == "tip" then
 			FH.M.SetStockTipOption(not db.ShowStockTip)
-			FH.M.Print(L["Extra tooltip:"]..(db.ShowStockTip and optStatusON or optStatusOFF))
+			FH.M.Print(L["Extra tooltip"]..(db.ShowStockTip and optStatusON or optStatusOFF))
 		end
 		if msg == "portals" or msg == "portal" then
 			FH.M.SetPortalsOption(not db.ShowPortals)
-			FH.M.Print(L["Portal shard icons:"]..(db.ShowPortals and optStatusON or optStatusOFF))
+			FH.M.Print(L["Portal shard icons"]..(db.ShowPortals and optStatusON or optStatusOFF))
 		end
 		if msg == "turnins" or msg == "turnin" or msg == "turn" then
 			FH.M.SetTurninsOption(not db.ShowTurnins)
-			FH.M.Print(L["Turn-in icons:"]..(db.ShowTurnins and optStatusON or optStatusOFF))
+			FH.M.Print(L["Turn-in icons"]..(db.ShowTurnins and optStatusON or optStatusOFF))
 		end
 		if msg == "combat" or msg == "hide" then
 			FH.M.SetHideInCombatOption(not db.HideInCombat)
-			FH.M.Print(L["Auto-hide in combat:"]..(db.HideInCombat and optStatusON or optStatusOFF))
+			FH.M.Print(L["Auto-hide in combat"]..(db.HideInCombat and optStatusON or optStatusOFF))
 		end
 		if msg == "darksoil" or msg == "soil" then
 			FH.M.SetDarkSoilOption(not db.DarkSoilHelpers)
-			FH.M.Print(L["Dark Soil helpers:"]..(db.DarkSoilHelpers and optStatusON or optStatusOFF))
+			FH.M.Print(L["Dark Soil helpers"]..(db.DarkSoilHelpers and optStatusON or optStatusOFF))
 		end
 		if msg == "way" or msg == "point" or msg == "clear" then
 			if FH.M.RemoveAllWaypoints then

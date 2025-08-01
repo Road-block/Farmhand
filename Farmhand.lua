@@ -27,7 +27,6 @@ local LABEL   = format("|T134435:16|t%s%s|r:",TEAL,addonName)
 local FarmhandDataDefaults = {
 	X = 0,
 	Y = -UIParent:GetHeight() / 5,
-	ToolsLocked = false,
 	PrintScannerMessages = true,
 	PlayScannerSounds = true,
 	ShowPortals = true,
@@ -38,16 +37,27 @@ local FarmhandDataDefaults = {
 	ShowVeggieIconsForBags = false,
 	DarkSoilHelpers = true,
 	ShowTurnins = true,
+	minimap = {
+		hide = true,
+		lock = false,
+		minimapPos = 250,
+	}
 }
 
 function FH.M.Initialize()
 	
 	FarmhandData = FarmhandData or CopyTable(FarmhandDataDefaults)
 	for k, v in pairs(FarmhandDataDefaults) do
-		if FarmhandData[k] == nil then FarmhandData[k] = v end
+		if FarmhandData[k] == nil then
+			if type(v)=="table" then
+				FarmhandData[k] = CopyTable(v)
+			else
+				FarmhandData[k] = v
+			end
+		end
 	end
 
---	FarmhandToolsLockOption:SetChecked(FarmhandData.ToolsLocked)
+  FarmhandMinimapHideOption:SetChecked(FarmhandData.minimap.hide)
 	FarmhandMessagesOption:SetChecked(FarmhandData.PrintScannerMessages)
 	FarmhandSoundsOption:SetChecked(FarmhandData.PlayScannerSounds)
 	FarmhandPortalsOption:SetChecked(FarmhandData.ShowPortals)
@@ -88,7 +98,85 @@ function FH.M.Initialize()
 	GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
 
 	hooksecurefunc(C_CVar, "SetCVar", FH.M.PostHookSetCVar)
+
+	FH.LDB = LibStub("LibDataBroker-1.1",true)
+	FH.LDBIcon = LibStub("LibDBIcon-1.0",true)
+	if FH.LDB and FH.LDBIcon then
+		FH.LDBObject = FH.LDB:NewDataObject(addonName,
+		  {
+        type = "launcher",
+        text = addonName,
+        icon = 609616,
+        label = "FH",
+        OnTooltipShow = FH.M.OnLDBIconTooltipShow,
+        OnClick = FH.M.OnLDBIconClick,
+      })
+		FH.LDBIcon:Register(addonName, FH.LDBObject, FarmhandData.minimap)
+	end
 	
+end
+
+function FH.M.IsOptionEnabled(option)
+	if option == "minimap.hide" then
+		return FarmhandData.minimap.hide
+	elseif option == "minimap.lock" then
+		return FarmhandData.minimap.lock
+	else
+		return FarmhandData[option]
+	end
+end
+
+function FH.M.ToggleQuickOption(option)
+	if option == "minimap.hide" then
+		FH.M.SetMinimapHideOption(not FarmhandData.minimap.hide)
+	elseif option == "minimap.lock" then
+		FH.M.SetMinimapLockOption(not FarmhandData.minimap.lock)
+	elseif option == "PrintScannerMessages" then
+		FH.M.SetMessagesOption(not FarmhandData.PrintScannerMessages)
+	elseif option == "PlayScannerSounds" then
+		FH.M.SetSoundsOption(not FarmhandData.PlayScannerSounds)
+	elseif option == "ShowStockTip" then
+		FH.M.SetStockTipOption(not FarmhandData.ShowStockTip)
+	elseif option == "ShowPortals" then
+		FH.M.SetPortalsOption(not FarmhandData.ShowPortals)
+	elseif option == "ShowTurnins" then
+		FH.M.SetTurninsOption(not FarmhandData.ShowTurnins)
+	elseif option == "HideInCombat" then
+		FH.M.SetHideInCombatOption(not FarmhandData.HideInCombat)
+	elseif option == "DarkSoilHelpers" then
+		FH.M.SetDarkSoilOption(not FarmhandData.DarkSoilHelpers)
+	end
+end
+
+function FH.M.OnLDBIconTooltipShow(tip)
+	local tip = tip or GameTooltip
+	tip:SetText(LABEL)
+	tip:AddDoubleLine(L["Left-Click"],L["Clear TomTom Waypoints"],1,0.65,0,1,1,0,false)
+	tip:AddDoubleLine(L["Right-Click"],L["Quick Options"],1,0.65,0,1,1,0,false)
+	tip:AddDoubleLine(L["Middle-Click"],L["Blizzard Options"],1,0.65,0,1,1,0,false)
+end
+function FH.M.OnLDBIconClick(frame, mouseButton, Down)
+	if mouseButton == "LeftButton" then
+		if FH.M.RemoveAllWaypoints then
+			FH.M.RemoveAllWaypoints()
+		end
+	elseif mouseButton == "RightButton" then
+    local menu = MenuUtil.CreateCheckboxContextMenu(frame,
+        FH.M.IsOptionEnabled,
+        FH.M.ToggleQuickOption,
+				{L["Chat info messages"],"PrintScannerMessages"},
+				{L["Notification sounds"],"PlayScannerSounds"},
+				{L["Extra tooltip"],"ShowStockTip"},
+				{L["Portal shard icons"],"ShowPortals"},
+				{L["Turn-in icons"],"ShowTurnins"},
+				{L["Auto-hide in combat"],"HideInCombat"},
+				{L["Dark Soil helpers"],"DarkSoilHelpers"},
+				{L["Hide Minimap icon"],"minimap.hide"},
+				{L["Lock Minimap icon"],"minimap.lock"}
+    )
+	elseif mouseButton == "MiddleButton" then
+		Settings.OpenToCategory(FH.optionsCategory:GetID())
+	end
 end
 
 function FH.M.UpdateMiscToolsCheckboxes()
@@ -140,7 +228,7 @@ local function AddCharacterCountLine(character, searchedID)
 		end
 
 		-- charInfo should look like 	(Bags: 4, Bank: 8, Equipped: 1, Mail: 7), table concat takes care of this
-		Farmhand.StockTip:AddDoubleLine(name, format("%s (%s%s)", ORANGE .. charCount .. WHITE, table.concat(t, WHITE..", "), WHITE))
+		Farmhand.StockTip:AddDoubleLine(name, format("%s (%s%s)", ORANGE .. charCount .. WHITE, table.concat(t, WHITE..", "), WHITE),1,1,1,1,1,1,false)
 	end
 end
 
@@ -190,12 +278,12 @@ function FH.M.SetUnitTooltip(tooltip, unitid)
 		end
 		local info = FH.M.GetUnitTooltipData(npcid)
 		if info then
-			Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1)
-			Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1)
+			Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1,false)
+			Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1,false)
 			for material,amount in pairs(info.foodgift.craft) do
-				Farmhand.StockTip:AddDoubleLine("-",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7)
+				Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7,false)
 			end
-			Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1)
+			Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1,false)
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
 		end
@@ -225,8 +313,8 @@ function FH.M.SetTradSkillItemTooltip(tooltip, skillIndex)
 		if info then
 			for npcid,data in pairs(info) do
 				if npcid ~= "craft" then
-					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
-					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
+					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
 				end
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
@@ -254,8 +342,8 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		local info = FH.M.GetBagItemTooltipData(itemID)
 		if info then
 			for npcid,data in pairs(info) do
-				Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
-				Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+				Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
+				Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
@@ -265,13 +353,13 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		if info then
 			if info.craft then
 				for ingredient,amount in pairs(info.craft) do
-					Farmhand.StockTip:AddDoubleLine("-",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7)
+					Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7,false)
 				end
 			end
 			for npcid,data in pairs(info) do
 				if npcid ~= "craft" then
-					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0)
-					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1)
+					Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
+					Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
 				end
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
@@ -281,8 +369,8 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
 		local info = FH.M.GetBagItemTooltipData(itemID)
 		if info then
 			for foodgift,data in pairs(info) do
-				Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7)
-				Farmhand.StockTip:AddDoubleLine("-",data.npc,1,1,1,0,1,0)
+				Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7,1,1,1,false)
+				Farmhand.StockTip:AddDoubleLine(" ",data.npc,1,1,1,0,1,0,false)
 			end
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
 			Farmhand.StockTip:Show()
@@ -319,7 +407,7 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
 			else
 				Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
 			end
-			Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,1,0)
+			Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,1,0,1,1,1,false)
 
 			if DataStore then
 
@@ -342,17 +430,28 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
 				for guildName, guildKey in pairs(DataStore:GetGuilds(GetRealmName())) do				-- this realm only
 					local guildCount = DataStore:GetGuildBankItemCount(guildKey, VeggieID) or 0
 					if guildCount > 0 then
-						Farmhand.StockTip:AddDoubleLine(GREEN..guildName, format("%s(%s: %s%s)", WHITE, "Guild Bank", TEAL..guildCount, WHITE))
+						Farmhand.StockTip:AddDoubleLine(GREEN..guildName, format("%s(%s: %s%s)", WHITE, "Guild Bank", TEAL..guildCount, WHITE),1,1,1,1,1,1,false)
 					end
 				end
 
 			else
-				Farmhand.StockTip:AddDoubleLine(L["On Hand"],onHand,0,1,0,1,1,1)
-				Farmhand.StockTip:AddDoubleLine(L["In Bank"],inBank,0,1,0,1,1,1)
+				Farmhand.StockTip:AddDoubleLine(L["On Hand"],onHand,0,1,0,1,1,1,false)
+				Farmhand.StockTip:AddDoubleLine(L["In Bank"],inBank,0,1,0,1,1,1,false)
 				FarmhandMerchantStockTipTextRight2:ClearAllPoints()
 				FarmhandMerchantStockTipTextRight2:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight1,"BOTTOMLEFT",0,-2)
 				FarmhandMerchantStockTipTextRight3:ClearAllPoints()
 				FarmhandMerchantStockTipTextRight3:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight2,"BOTTOMLEFT",0,-2)
+			end
+
+			local copper
+			if Auctionator and Auctionator.API and Auctionator.API.v1 then
+				copper = Auctionator.API.v1.GetAuctionPriceByItemID(addonName, VeggieID)
+			elseif TSM_API and TSM_API.GetCustomPriceValue then
+				copper = TSM_API.GetCustomPriceValue("dbminbuyout", "i:"..VeggieID)
+			end
+			if copper then
+				local moneyString = GetMoneyString(copper)
+				Farmhand.StockTip:AddDoubleLine(L["Market Price"],moneyString,1,1,0,1,1,1,false)
 			end
 
 			if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
@@ -436,10 +535,6 @@ function FH.M.ZoneChanged()
 	if EnteringSunsong or EnteringMarket or ShowTurnins then
 		Farmhand:Show()
 		FH.M.Update()
-	end
-
-	if LeavingHalfhill then
-		--FH.M.DropTools() -- protected action in classic
 	end
 	
 	FH.InHalfhill = InHalfhill
@@ -582,7 +677,7 @@ function FH.M.ItemOnEnter(Button)
 	GameTooltip_SetDefaultAnchor(GameTooltip, UIParent)
 	GameTooltip:SetBagItem(Button.Bag,Button.Slot)
 	if Button.ItemType == "Turnin" then
-		GameTooltip:AddDoubleLine(L["Left-Click for Directions"],L["Right-Click to Clear"])
+		GameTooltip:AddDoubleLine(L["Left-Click for Directions"],L["Right-Click to Clear"],0,1,0,1,1,0,false)
 	end
 	GameTooltip:Show()
 end
@@ -730,8 +825,22 @@ function FH.M.SetStockTipPosition(info)
 	end
 end
 
-function FH.M.SetLockToolsOption(Value)
-	FarmhandData.ToolsLocked = Value
+function FH.M.SetMinimapHideOption(Value)
+	FarmhandData.minimap.hide = Value
+	if FarmhandData.minimap.hide then
+		FH.LDBIcon:Hide(addonName)
+	else
+		FH.LDBIcon:Show(addonName)
+	end
+end
+
+function FH.M.SetMinimapLockOption(Value)
+	FarmhandData.minimap.lock = Value
+	if FarmhandData.minimap.lock then
+		FH.LDBIcon:Lock(addonName)
+	else
+		FH.LDBIcon:Unlock(addonName)
+	end
 end
 
 function FH.M.SetMessagesOption(Value)
@@ -911,27 +1020,6 @@ end
 
 function FH.M.ScanButtonOnLeave()
 	GameTooltip_Hide()
-end
-
-function FH.M.DropTools()
-	if FarmhandData.ToolsLocked then
-		FH.M.Print(L["Leaving Halfhill."].." "..L["Tools are Locked."])
-	else
-		ClearCursor()
-		for _, ItemID in ipairs(FH.Tools) do
-			local Bag, Slot = FH.M.FindItemInBags(ItemID)
-			if Bag and Slot then
-				FH.PickupContainerItem(Bag,Slot)
-				if CursorHasItem() then
-					local _, ID, Link = GetCursorInfo()
-					if ID == ItemID then
-						FH.M.Print(L["Leaving Halfhill."].." "..L["Dropping"].." "..Link..".")
-						DeleteCursorItem()
-					end
-				end
-			end
-		end
-	end
 end
 
 function FH.M.FindItemInBags(ItemID)
