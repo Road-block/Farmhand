@@ -95,7 +95,7 @@ function FH.M.Initialize()
   GameTooltip:HookScript("OnTooltipSetUnit",FH.M.SetUnitTooltip)
   hooksecurefunc(GameTooltip, "SetBagItem", FH.M.SetBagItemTooltip)
   hooksecurefunc(GameTooltip, "SetTradeSkillItem", FH.M.SetTradSkillItemTooltip)
-  GameTooltip:HookScript("OnHide", FH.M.HideStockTip)
+  GameTooltip:HookScript("OnHide", FH.M.HideExtraTooltip)
 
   hooksecurefunc(C_CVar, "SetCVar", FH.M.PostHookSetCVar)
 
@@ -113,7 +113,7 @@ function FH.M.Initialize()
       })
     FH.LDBIcon:Register(addonName, FH.LDBObject, FarmhandData.minimap)
   end
-
+  FH.LQTip1_0 = LibStub("LibQTip-1.0",true)
 end
 
 function FH.M.IsOptionEnabled(option)
@@ -179,6 +179,23 @@ function FH.M.OnLDBIconClick(frame, mouseButton, Down)
   end
 end
 
+function FH.M.GetExtraTooltip()
+  if FH.LQTip1_0 then
+    if not FH.LQTip1_0:IsAcquired(addonName.."QTip_1.0") then
+      FH.QTip = FH.LQTip1_0:Acquire(addonName.."QTip_1.0",3,"LEFT","LEFT","LEFT")
+    else
+      FH.QTip:Clear()
+    end
+  end
+  return FH.QTip
+end
+
+function FH.M.HideExtraTooltip(anchor)
+  if FH.LQTip1_0:IsAcquired(addonName.."QTip_1.0") then
+    FH.LQTip1_0:Release(FH.QTip)
+  end
+end
+
 function FH.M.UpdateMiscToolsCheckboxes()
   local AllChecked = true
   local Choices = FarmhandData.ShowMiscTools or {}
@@ -228,7 +245,11 @@ local function AddCharacterCountLine(character, searchedID)
     end
 
     -- charInfo should look like  (Bags: 4, Bank: 8, Equipped: 1, Mail: 7), table concat takes care of this
-    Farmhand.StockTip:AddDoubleLine(name, format("%s (%s%s)", ORANGE .. charCount .. WHITE, table.concat(t, WHITE..", "), WHITE),1,1,1,1,1,1,false)
+    if FH.QTip then
+      local line, col = FH.QTip:AddLine()
+      FH.QTip:SetCell(line,1,name)
+      FH.QTip:SetCell(line,2,format("%s (%s%s)", ORANGE .. charCount .. WHITE, table.concat(t, WHITE..", "), WHITE))
+    end
   end
 end
 
@@ -253,14 +274,6 @@ function FH.M.IsCookingOpen()
   end
 end
 
-function FH.M.HideStockTip(tooltip)
-  local tooltip = tooltip or GameTooltip
-  if Farmhand.StockTip:IsOwned(tooltip) then
-    Farmhand.StockTip:ClearLines()
-    Farmhand.StockTip:Hide()
-  end
-end
-
 function FH.M.SetUnitTooltip(tooltip, unitid)
   if not (FarmhandData.ShowStockTip and FH.InValley) then
     return
@@ -269,26 +282,42 @@ function FH.M.SetUnitTooltip(tooltip, unitid)
   local name,unitid = tooltip:GetUnit()
   local npcid = FH.M.ParseGUID(UnitGUID(unitid or "none"))
   if npcid and FH.NpcInfo[npcid] then
-    Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
-    Farmhand.StockTip:ClearAllPoints()
+    if not tooltip and tooltip.GetCenter then return end
+    FH.QTip = FH.M.GetExtraTooltip()
+    --FH.QTip:SmartAnchorTo(tooltip)
+    FH.QTip:ClearAllPoints()
     if FarmhandData.StockTipPosition == "BELOW" then
-      Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+      FH.QTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT")
     else
-      Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+      FH.QTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT")
     end
     local info = FH.M.GetUnitTooltipData(npcid)
     if info then
-      Farmhand.StockTip:AddDoubleLine(L["Likes"],info.gift,0,1,0,1,1,1,false)
-      Farmhand.StockTip:AddDoubleLine(L["Eats"],info.foodgift.food.."(x5)",0,1,0,1,1,1,false)
+      local line, col = FH.QTip:AddLine()
+      FH.QTip:SetCell(line,1,L["Likes"])
+      FH.QTip:SetCellTextColor(line,1,0,1,0)
+      FH.QTip:SetCell(line,2,info.gift,nil,"RIGHT")
+      FH.QTip:SetCellTextColor(line,2,1,1,1)
+      line = FH.QTip:AddLine()
+      FH.QTip:SetCell(line,1,L["Eats"])
+      FH.QTip:SetCellTextColor(line,1,0,1,0)
+      FH.QTip:SetCell(line,2,info.foodgift.food.."(x5)",nil,"RIGHT")
+      FH.QTip:SetCellTextColor(line,2,1,1,1)
       for material,amount in pairs(info.foodgift.craft) do
-        Farmhand.StockTip:AddDoubleLine(" ",material .. format("x%d(%d)",amount,amount*5),1,1,1,0.7,0.7,0.7,false)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1," ")
+        FH.QTip:SetCell(line,2,material .. format("x%d(%d)",amount,amount*5),nil,"RIGHT")
+        FH.QTip:SetCellTextColor(line,2,0.7,0.7,0.7)
       end
-      Farmhand.StockTip:AddDoubleLine(L["Best Friend"],info.reward,0,1,0,1,1,1,false)
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      line = FH.QTip:AddLine()
+      FH.QTip:SetCell(line,1,L["Best Friend"])
+      FH.QTip:SetCellTextColor(line,1,0,1,0)
+      FH.QTip:SetCell(line,2,info.reward,nil,"RIGHT")
+      FH.QTip:SetCellTextColor(line,2,1,1,1)
+      FH.QTip:Show()
     end
   else
-    FH.M.HideStockTip(tooltip)
+    FH.M.HideExtraTooltip(tooltip)
   end
 end
 
@@ -302,26 +331,36 @@ function FH.M.SetTradSkillItemTooltip(tooltip, skillIndex)
   local testID = ttItemlink and FH.GetItemInfoInstant(ttItemlink)
   if itemID and testID and (itemID == testID) then
     if not FH.TurninFood[itemID] then return end
-    Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
-    Farmhand.StockTip:ClearAllPoints()
+    if not tooltip and tooltip.GetCenter then return end
+    FH.QTip = FH.M.GetExtraTooltip()
+    --FH.QTip:SmartAnchorTo(tooltip)
+    FH.QTip:ClearAllPoints()
     if FarmhandData.StockTipPosition == "BELOW" then
-      Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+      FH.QTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT")
     else
-      Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+      FH.QTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT")
     end
     local info = FH.M.GetBagItemTooltipData(itemID)
     if info then
+      local line, col
       for npcid,data in pairs(info) do
         if npcid ~= "craft" then
-          Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
-          Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
+          line = FH.QTip:AddLine()
+          FH.QTip:SetCell(line,1,data.npc)
+          FH.QTip:SetCellTextColor(line,1,0,1,0)
+          FH.QTip:SetCell(line,2,data.reaction,nil,"RIGHT")
+          FH.QTip:SetCellTextColor(line,2,1,1,0)
+          line = FH.QTip:AddLine()
+          FH.QTip:SetCell(line,1,L["Best Friend"])
+          FH.QTip:SetCellTextColor(line,1,0,1,0)
+          FH.QTip:SetCell(line,2,data.reward,nil,"RIGHT")
+          FH.QTip:SetCellTextColor(line,2,1,1,1)
         end
       end
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      FH.QTip:Show()
     end
   else
-    FH.M.HideStockTip(tooltip)
+    FH.M.HideExtraTooltip(tooltip)
   end
 end
 
@@ -331,52 +370,78 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
   local itemID = FH.GetContainerItemID(bag, slot)
   if not itemID then return end
   if not (FH.TurninGift[itemID] or FH.TurninFood[itemID] or FH.FoodGiftIngredient) then return end
-  Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
-  Farmhand.StockTip:ClearAllPoints()
+  if not tooltip and tooltip.GetCenter then return end
+  FH.QTip = FH.M.GetExtraTooltip()
+  --FH.QTip:SmartAnchorTo(tooltip)
+  FH.QTip:ClearAllPoints()
   if FarmhandData.StockTipPosition == "BELOW" then
-    Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+    FH.QTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT")
   else
-    Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+    FH.QTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT")
   end
+  local line, col
   if FH.TurninGift[itemID] then
     local info = FH.M.GetBagItemTooltipData(itemID)
     if info then
       for npcid,data in pairs(info) do
-        Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
-        Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,data.npc)
+        FH.QTip:SetCellTextColor(line,1,0,1,0)
+        FH.QTip:SetCell(line,2,data.reaction,nil,"RIGHT")
+        FH.QTip:SetCellTextColor(line,2,1,1,0)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,L["Best Friend"])
+        FH.QTip:SetCellTextColor(line,1,0,1,0)
+        FH.QTip:SetCell(line,2,data.reward,nil,"RIGHT")
+        FH.QTip:SetCellTextColor(line,2,1,1,1)
       end
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      FH.QTip:Show()
     end
   elseif FH.TurninFood[itemID] then
     local info = FH.M.GetBagItemTooltipData(itemID)
     if info then
       if info.craft then
         for ingredient,amount in pairs(info.craft) do
-          Farmhand.StockTip:AddDoubleLine(" ",format("%sx%d",ingredient,amount),1,1,1,0.7,0.7,0.7,false)
+          line = FH.QTip:AddLine()
+          FH.QTip:SetCell(line,1," ")
+          FH.QTip:SetCell(line,2,format("%sx%d",ingredient,amount),nil,"RIGHT")
+          FH.QTip:SetCellTextColor(line,2,0.7,0.7,0.7)
         end
       end
       for npcid,data in pairs(info) do
         if npcid ~= "craft" then
-          Farmhand.StockTip:AddDoubleLine(data.npc,data.reaction,0,1,0,1,1,0,false)
-          Farmhand.StockTip:AddDoubleLine(L["Best Friend"],data.reward,0,1.0,1,1,1,false)
+          line = FH.QTip:AddLine()
+          FH.QTip:SetCell(line,1,data.npc)
+          FH.QTip:SetCellTextColor(line,1,0,1,0)
+          FH.QTip:SetCell(line,2,data.reaction,nil,"RIGHT")
+          FH.QTip:SetCellTextColor(line,2,1,1,0)
+          line = FH.QTip:AddLine()
+          FH.QTip:SetCell(line,1,L["Best Friend"])
+          FH.QTip:SetCellTextColor(line,1,0,1,0)
+          FH.QTip:SetCell(line,2,data.reward,nil,"RIGHT")
+          FH.QTip:SetCellTextColor(line,2,1,1,1)
         end
       end
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      FH.QTip:Show()
     end
   elseif FH.FoodGiftIngredient[itemID] then
     local info = FH.M.GetBagItemTooltipData(itemID)
     if info then
       for foodgift,data in pairs(info) do
-        Farmhand.StockTip:AddDoubleLine(data.amount,data.food,0.7,0.7,0.7,1,1,1,false)
-        Farmhand.StockTip:AddDoubleLine(" ",data.npc,1,1,1,0,1,0,false)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,data.amount)
+        FH.QTip:SetCellTextColor(line,1,0.7,0.7,0.7)
+        FH.QTip:SetCell(line,2,data.food,nil,"RIGHT")
+        FH.QTip:SetCellTextColor(line,2,1,1,1)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1," ")
+        FH.QTip:SetCell(line,2,data.npc,nil,nil,"RIGHT")
+        FH.QTip:SetCellTextColor(line,2,0,1,0)
       end
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      FH.QTip:Show()
     end
   else
-    FH.M.HideStockTip(tooltip)
+    FH.M.HideExtraTooltip(tooltip)
   end
 end
 
@@ -400,24 +465,31 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
       icon = icon and "|T"..icon..":14:14:0:0:32:32:3:29:3:29|t" or "??"
       veggieName = veggieName and icon.." "..veggieName or icon.." ".."ItemID: "..VeggieID
 
-      Farmhand.StockTip:SetOwner(tooltip, "ANCHOR_NONE")
-      Farmhand.StockTip:ClearAllPoints()
+      if not tooltip and tooltip.GetCenter then return end
+      FH.QTip = FH.M.GetExtraTooltip()
+      --FH.QTip:SmartAnchorTo(tooltip)
+
+      FH.QTip:ClearAllPoints()
       if FarmhandData.StockTipPosition == "BELOW" then
-        Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT", 0, 0)
+        FH.QTip:SetPoint("TOPLEFT", tooltip, "BOTTOMLEFT")
       else
-        Farmhand.StockTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT", 0, 0)
+        FH.QTip:SetPoint("TOPLEFT", tooltip, "TOPRIGHT")
       end
-      Farmhand.StockTip:AddDoubleLine(L["Produces"],veggieName,0,1,0,1,1,1,false)
+      local line, col = FH.QTip:AddLine()
+      FH.QTip:SetCell(line,1,L["Produces"])
+      FH.QTip:SetCellTextColor(line,1,0,1,0)
+      FH.QTip:SetCell(line,2,veggieName)
+      FH.QTip:SetCellTextColor(line,2,1,1,1)
 
       if DataStore then
 
-        Farmhand.StockTip:AddLine(" ")
+        line = FH.QTip:AddLine(" ")
 
         local ThisChar = DataStore:GetCharacter()
 
         AddCharacterCountLine(ThisChar,VeggieID)
 
-        Farmhand.StockTip:AddLine(" ")
+        line = FH.QTip:AddLine(" ")
 
         for name, character in pairs(DataStore:GetCharacters(GetRealmName(), "Default")) do
           if name ~= UnitName("player") and DataStore:GetCharacterFaction(character) == UnitFactionGroup("player") then
@@ -425,22 +497,28 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
           end
         end
 
-        Farmhand.StockTip:AddLine(" ")
+        line = FH.QTip:AddLine(" ")
 
         for guildName, guildKey in pairs(DataStore:GetGuilds(GetRealmName())) do        -- this realm only
           local guildCount = DataStore:GetGuildBankItemCount(guildKey, VeggieID) or 0
           if guildCount > 0 then
-            Farmhand.StockTip:AddDoubleLine(GREEN..guildName, format("%s(%s: %s%s)", WHITE, "Guild Bank", TEAL..guildCount, WHITE),1,1,1,1,1,1,false)
+            line = FH.QTip:AddLine()
+            FH.QTip:SetCell(line,1,GREEN..guildName)
+            FH.QTip:SetCell(line,2,format("%s(%s: %s%s)", WHITE, "Guild Bank", TEAL..guildCount, WHITE))
           end
         end
 
       else
-        Farmhand.StockTip:AddDoubleLine(L["On Hand"],onHand,0,1,0,1,1,1,false)
-        Farmhand.StockTip:AddDoubleLine(L["In Bank"],inBank,0,1,0,1,1,1,false)
-        FarmhandMerchantStockTipTextRight2:ClearAllPoints()
-        FarmhandMerchantStockTipTextRight2:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight1,"BOTTOMLEFT",0,-2)
-        FarmhandMerchantStockTipTextRight3:ClearAllPoints()
-        FarmhandMerchantStockTipTextRight3:SetPoint("TOPLEFT",FarmhandMerchantStockTipTextRight2,"BOTTOMLEFT",0,-2)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,L["On Hand"])
+        FH.QTip:SetCellTextColor(line,1,0,1,0)
+        FH.QTip:SetCell(line,2,onHand)
+        FH.QTip:SetCellTextColor(line,2,1,1,1)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,L["In Bank"])
+        FH.QTip:SetCellTextColor(line,1,0,1,0)
+        FH.QTip:SetCell(line,2,inBank)
+        FH.QTip:SetCellTextColor(line,2,1,1,1)
       end
 
       local copper
@@ -451,13 +529,15 @@ function FH.M.SetMerchantItemTooltip(tooltip, slot)
       end
       if copper then
         local moneyString = GetMoneyString(copper)
-        Farmhand.StockTip:AddDoubleLine(L["Market Price"],moneyString,1,1,0,1,1,1,false)
+        line = FH.QTip:AddLine()
+        FH.QTip:SetCell(line,1,L["Market Price"])
+        FH.QTip:SetCellTextColor(line,1,1,1,0)
+        FH.QTip:SetCell(line,2,moneyString)
       end
 
-      if TipTac then TipTac:AddModifiedTip(Farmhand.StockTip) end
-      Farmhand.StockTip:Show()
+      FH.QTip:Show()
     else
-      FH.M.HideStockTip(tooltip)
+      FH.M.HideExtraTooltip(tooltip)
     end
   end
 end
@@ -1072,7 +1152,10 @@ end
 
 function FH.E.Mark(_,button,down)
   if down then return end
-  local name = UnitExists("target") and UnitName("target") or ""
+  if not UnitExists("target") then return end
+  if not UnitInPhase("target") then return end
+  if not (UnitGUID("target")):match("^(Creature)%-") then return end
+  local name = UnitName("target") or ""
   local found
   for k,crop in pairs(FH.CropStates) do
     local cropname, mark = crop.CropName, crop.Icon

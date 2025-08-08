@@ -2,6 +2,7 @@ local addonName, FH = ...
 local L = FH.L
 FH.M = FH.M or {} -- methods
 FH._i = FH._i or {} -- internal state
+
 local _
 
 local msq, msqGroups = nil, {}
@@ -368,10 +369,7 @@ UIDropDownMenu_JustifyText(f,"LEFT")
 UIDropDownMenu_Initialize(f, FH.M.InitializeStockTipDropdown)
 Farmhand.StockTipPositionDropdown = f
 
-local f = CreateFrame("GameTooltip","FarmhandMerchantStockTip",Farmhand,"GameTooltipTemplate")
-Farmhand.StockTip = f
-
-f = CreateFrame("CheckButton","FarmhandSeedIconOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
+local f = CreateFrame("CheckButton","FarmhandSeedIconOption",FarmhandOptionsPanel,"UICheckButtonTemplate")
 f:SetPoint("TOPLEFT",FarmhandStockTipOption,"BOTTOMLEFT",0,-45)
 f:SetScript("OnClick",function(self) FH.M.RunAfterCombat(FH.M.SetSeedIconOption,{self:GetChecked()}) end)
 FarmhandSeedIconOptionText:SetText(L["Show Vegetable Icon on Seed Buttons"])
