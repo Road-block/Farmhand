@@ -1150,12 +1150,23 @@ function FH.M.Print(msg)
   chatFrame:AddMessage(out)
 end
 
+local validGUIDTypes = {
+  Creature = true,
+  Vehicle = true,
+  GameObject = true,
+}
 function FH.E.Mark(_,button,down)
   if down then return end
-  if not UnitExists("target") then return end
-  if not UnitInPhase("target") then return end
-  if not (UnitGUID("target")):match("^(Creature)%-") then return end
-  local name = UnitName("target") or ""
+  local shouldClearName
+  if not UnitExists("target") then
+    shouldClearName = true
+  else
+    if not UnitInPhase("target") then shouldClearName = true end
+    local targetGUID = UnitGUID("target") or ""
+    local guidType = targetGUID and targetGUID:match("^(%a+)%-") or ""
+    if not validGUIDTypes[guidType] then shouldClearName = true end
+  end
+  local name = shouldClearName and "" or ((UnitName("target")) or "")
   local found
   for k,crop in pairs(FH.CropStates) do
     local cropname, mark = crop.CropName, crop.Icon
