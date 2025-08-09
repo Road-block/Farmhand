@@ -435,7 +435,7 @@ function FH.M.SetBagItemTooltip(tooltip, bag, slot)
         FH.QTip:SetCellTextColor(line,2,1,1,1)
         line = FH.QTip:AddLine()
         FH.QTip:SetCell(line,1," ")
-        FH.QTip:SetCell(line,2,data.npc,nil,nil,"RIGHT")
+        FH.QTip:SetCell(line,2,data.npc,nil,"RIGHT")
         FH.QTip:SetCellTextColor(line,2,0,1,0)
       end
       FH.QTip:Show()
