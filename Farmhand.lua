@@ -933,6 +933,7 @@ end
 
 function FH.M.SetPortalsOption(Value)
   FarmhandData.ShowPortals = Value
+  FH.M.ZoneChanged()
   if Value then
     if FH.InSunsong then
       FarmhandPortals:Show()
@@ -946,6 +947,7 @@ end
 
 function FH.M.SetTurninsOption(Value)
   FarmhandData.ShowTurnins = Value
+  FH.M.ZoneChanged()
   if Value then
     if FH.M.CheckInValley() then
       FarmhandTurnins:Show()
