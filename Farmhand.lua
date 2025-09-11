@@ -557,7 +557,7 @@ function FH.M.ZoneChanged()
     FH.M.ResetDarkSoilHelpers()
   end
 
-  if not (InHalfhill or FH.InHalfhill or ShowTurnins) then return end
+  if not (InHalfhill or FH.InHalfhill or FarmhandData.ShowTurnins) then return end
 
   local LeavingHalfhill = not InHalfhill and FH.InHalfhill
 
@@ -568,14 +568,14 @@ function FH.M.ZoneChanged()
   local LeavingMarket = not InMarket and FH.InMarket
 
   if ((LeavingSunsong or LeavingMarket) and not (EnteringSunsong or EnteringMarket)) then
-    Farmhand:UnregisterEvent("BAG_UPDATE_DELAYED")
     Farmhand:UnregisterEvent("MERCHANT_SHOW")
     Farmhand:UnregisterEvent("MERCHANT_CLOSED")
     Farmhand:UnregisterEvent("MERCHANT_UPDATE")
     FarmhandSeeds:Hide()
     FarmhandTools:Hide()
     FarmhandPortals:Hide()
-    if not ShowTurnins then
+    if not (ShowTurnins) then
+      Farmhand:UnregisterEvent("BAG_UPDATE_DELAYED")
       FarmhandTurnins:Hide()
       Farmhand:Hide()
       UnregisterStateDriver(Farmhand,"visibility")
@@ -610,6 +610,10 @@ function FH.M.ZoneChanged()
     end
     FarmhandTools:Hide()
     FarmhandPortals:Hide()
+  end
+
+  if not (ShowTurnins) then
+    FarmhandTurnins:Hide()
   end
 
   if EnteringSunsong or EnteringMarket or ShowTurnins then
