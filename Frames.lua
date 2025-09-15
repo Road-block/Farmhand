@@ -133,6 +133,11 @@ local function SetupTomTom()
 						FH._i.waypoints[gift][key] = waypoint
 					end
 				end
+				if TomTom.SetClosestWaypoint and FH.M.CheckInValley() then
+					C_Timer.After(0.2,function()
+						TomTom:SetClosestWaypoint()
+					end)
+				end
 			end
 		end
 	end
@@ -143,6 +148,11 @@ local function SetupTomTom()
 				if waypoints then
 					for key,waypoint in pairs(waypoints) do
 						TomTom:RemoveWaypoint(waypoint)
+					end
+					if TomTom.SetClosestWaypoint and FH.M.CheckInValley() then
+						C_Timer.After(0.2,function()
+							TomTom:SetClosestWaypoint()
+						end)
 					end
 				end
 			end
