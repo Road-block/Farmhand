@@ -4,6 +4,8 @@ FH.M = FH.M or {} -- methods
 FH.E = FH.E or {} -- exports
 FH._i = FH._i or {} -- internal state
 local ValleyMapID,PandariaContID,_ = 376,870
+local master_plow_item, master_plow_spell = 89815, 116357 -- 89880, 18499 -- DEBUG
+local master_plow_buff = C_Spell.GetSpellName(master_plow_spell)
 
 local msq, msqGroups = nil, {}
 if LibStub then
@@ -213,6 +215,22 @@ end
 
 function FH.M.MerchantEvent(MerchantOpen)
   FH.MerchantOpen = MerchantOpen
+end
+
+function FH.M.HandlePlayerCast(spellid)
+  -- master plow handling
+  if spellid == master_plow_spell then
+    FH._i.masterPlowActive = true
+    local cdInfo = FH.GetSpellCooldown(master_plow_spell)
+    if cdInfo then
+      if (cdInfo.startTime > 0 and cdInfo.duration > 0) then
+        local cdLeft = cdInfo.startTime + cdInfo.duration - GetTime()
+        if cdLeft and cdLeft > 0 then
+          C_Timer.After(cdLeft, function() FH._i.masterPlowActive = false end)
+        end
+      end
+    end
+  end
 end
 
 function FH.M.PostHookSetCVar(cvar, value)
@@ -604,12 +622,20 @@ function FH.M.ZoneChanged()
     FarmhandTools:Show()
     if FarmhandData.ShowPortals then FarmhandPortals:Show() end
     Farmhand:RegisterEvent("BAG_UPDATE_COOLDOWN")
+    if FH.GetItemCount(master_plow_item) > 0 then
+      Farmhand:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED","player")
+    else
+      Farmhand:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+      FH._i.masterPlowActive = false
+    end
   elseif LeavingSunsong then
     if not ShowTurnins then
       Farmhand:UnregisterEvent("BAG_UPDATE_COOLDOWN")
     end
     FarmhandTools:Hide()
     FarmhandPortals:Hide()
+    Farmhand:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    FH._i.masterPlowActive = false
   end
 
   if not (ShowTurnins) then
@@ -720,9 +746,19 @@ function FH.M.ItemPreClick(Button,MouseButton,Down)
     local Bag, Slot = FH.M.FindItemInBags(Button.ItemID)
     if IsShiftKeyDown() then
       Button:SetAttribute("type",nil)
-    elseif FH.InSunsong and Button.ItemType == "Seed" and UnitName("target") ~= L["Tilled Soil"] then
-      Button:SetAttribute("type","macro")
-      Button:SetAttribute("macrotext","/targetexact "..L["Tilled Soil"].."\n/use "..Bag.." "..Slot)
+    elseif FH.InSunsong then
+      if Button.ItemType == "Seed" and UnitName("target") ~= L["Tilled Soil"] then
+        Button:SetAttribute("type","macro")
+        Button:SetAttribute("macrotext","/targetexact "..L["Tilled Soil"].."\n/use "..Bag.." "..Slot)
+      elseif Button.ItemType == "FarmTool" and Button.ItemID == master_plow_item then
+        if FH._i.masterPlowActive then
+          Button:SetAttribute("type","macro")
+          Button:SetAttribute("macrotext","/cancelaura "..master_plow_buff)
+        end
+      elseif Button.ItemType ~= "Turnin" then
+        Button:SetAttribute("type","item")
+        Button:SetAttribute("item",Bag.." "..Slot)
+      end
     else
       if Button.ItemType ~= "Turnin" then
         Button:SetAttribute("type","item")
@@ -738,6 +774,19 @@ function FH.M.ItemPostClick(Button,MouseButton,Down)
     if Button.ItemType ~= "Turnin" then
       Button:SetAttribute("type","item")
       Button:SetAttribute("item","item:"..Button.ItemID)
+      if Button.ItemType == "FarmTool" and Button.ItemID == master_plow_item then
+        local cdInfo = FH.GetSpellCooldown(master_plow_spell)
+        if cdInfo then
+          if (cdInfo.startTime > 0 and cdInfo.duration > 0) then
+            Button.Cooldown:SetCooldown(cdInfo.startTime, cdInfo.duration, cdInfo.modRate)
+          else
+            Button.Cooldown:Clear()
+          end
+        else
+          Button.Cooldown:Clear()
+        end
+        FH._i.masterPlowActive = false
+      end
     end
     Button:SetAttribute("shift-item*","")
   end

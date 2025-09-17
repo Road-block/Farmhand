@@ -1,5 +1,6 @@
 local addonName, FH = ...
 FH.M = FH.M or {}
+FH.E = FH.E or {}
 
 local ShowContainerSellCursor = function(...)
   if C_Container and C_Container.ShowContainerSellCursor then
@@ -67,6 +68,15 @@ local GetItemInfoInstant = function(...)
     return _G.GetItemInfoInstant(...)
   end
 end
+local GetSpellCooldown = function(...)
+  if C_Spell and C_Spell.GetSpellCooldown then
+    return C_Spell.GetSpellCooldown(...)
+  elseif _G.GetSpellCooldown then
+    local cdInfo = {}
+    cdInfo.startTime, cdInfo.duration, cdInfo.isEnabled, cdInfo.modRate = _G.GetSpellCooldown(...)
+    return cdInfo
+  end
+end
 
 FH.ShowContainerSellCursor = ShowContainerSellCursor
 FH.GetContainerItemInfo = GetContainerItemInfo
@@ -77,3 +87,4 @@ FH.GetItemInfo = GetItemInfo
 FH.GetItemCount = GetItemCount
 FH.GetItemIcon = GetItemIcon
 FH.GetItemInfoInstant = GetItemInfoInstant
+FH.GetSpellCooldown = GetSpellCooldown

@@ -47,6 +47,9 @@ local function NewFarmhandButton(Name,Parent,ItemID,ItemType)
 	f.Count = f:CreateFontString(Name.."Count","ARTWORK","NumberFontNormal")
 	f.Count:SetJustifyH("RIGHT")
 	f.Count:SetPoint("BottomRight",-2,2)
+
+	f.Cooldown = CreateFrame("Cooldown", "$parentCooldown", f, "CooldownFrameTemplate")
+	f.Cooldown:SetAllPoints(true)
 	
 	f.ItemType = ItemType
 
@@ -233,6 +236,11 @@ addonFrame:SetScript("OnEvent",function(self,event,...)
 	elseif event == "LOOT_READY" then
 		local autoLoot = ...
 		FH.M.LootDarkSoil(autoLoot)
+	elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+		local unit, guid, spellid = ...
+		if UnitIsUnit("player", unit) then
+			FH.M.HandlePlayerCast(spellid)
+		end
 	end
 end)
 
