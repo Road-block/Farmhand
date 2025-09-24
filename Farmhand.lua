@@ -668,7 +668,15 @@ function FH.M.LootDarkSoil(autoLoot)
           end
           ConfirmLootSlot(slot)
           local dialog = StaticPopup_FindVisible("LOOT_BIND")
-          if dialog then _G[dialog:GetName().."Button1"]:Click() end
+          if dialog then
+            if dialog.GetButton1 then
+              dialog:GetButton1():Click()
+            else
+              if _G[dialog:GetName().."Button1"] then
+                _G[dialog:GetName().."Button1"]:Click()
+              end
+            end
+          end
         end
       end
     end
