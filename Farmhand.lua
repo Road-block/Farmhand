@@ -1226,6 +1226,7 @@ function FH.E.Mark(_,button,down)
   else
     if not UnitInPhase("target") then shouldClearName = true end
     local targetGUID = UnitGUID("target") or ""
+    if UnitIsOwnerOrControllerOfUnit("player","target") then shouldClearName = true end
     local guidType = targetGUID and targetGUID:match("^(%a+)%-") or ""
     if not validGUIDTypes[guidType] then shouldClearName = true end
   end
