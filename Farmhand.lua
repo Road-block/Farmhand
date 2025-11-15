@@ -274,11 +274,13 @@ end
 function FH.M.ParseGUID(guid)
   if not guid or guid == "" then return end
   local guidType, arg2, arg3, arg4, arg5, arg6, arg7 = ("-"):split(guid)
+  local npcid = 0
+  guidType = guidType or ""
   if guidType == "Creature" then
     local _, serverID, instanceID, zoneUID, npc, spawnUID = arg2, arg3, arg4, arg5, arg6, arg7
-    local npcid = npc and tonumber(npc) or 0
-    return npcid, guidType
+    npcid = npc and tonumber(npc) or 0
   end
+  return npcid, guidType
 end
 
 function FH.M.IsCookingOpen()
@@ -1213,6 +1215,9 @@ function FH.M.Print(msg)
   chatFrame:AddMessage(out)
 end
 
+local blacklistNPCids = {
+  [55659] = true, -- Wild Imp
+}
 local validGUIDTypes = {
   Creature = true,
   Vehicle = true,
@@ -1226,9 +1231,11 @@ function FH.E.Mark(_,button,down)
   else
     if not UnitInPhase("target") then shouldClearName = true end
     local targetGUID = UnitGUID("target") or ""
-    if UnitIsOwnerOrControllerOfUnit("player","target") then shouldClearName = true end
-    local guidType = targetGUID and targetGUID:match("^(%a+)%-") or ""
+    --if UnitIsOwnerOrControllerOfUnit("player","target") then shouldClearName = true end
+    --local guidType = targetGUID and targetGUID:match("^(%a+)%-") or ""
+    local npcid, guidType = FH.M.ParseGUID(targetGUID)
     if not validGUIDTypes[guidType] then shouldClearName = true end
+    if blacklistNPCids[npcid] then shouldClearName = true end
   end
   local name = shouldClearName and "" or ((UnitName("target")) or "")
   local found
