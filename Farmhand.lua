@@ -758,19 +758,23 @@ function FH.M.ItemPreClick(Button,MouseButton,Down)
       Button:SetAttribute("type",nil)
     elseif FH.InSunsong then
       if Button.ItemType == "Seed" and UnitName("target") ~= L["Tilled Soil"] then
+        Button:SetAttribute("useOnKeyDown",false)
         Button:SetAttribute("type","macro")
         Button:SetAttribute("macrotext","/targetexact "..L["Tilled Soil"].."\n/use "..Bag.." "..Slot)
       elseif Button.ItemType == "FarmTool" and Button.ItemID == master_plow_item then
         if FH._i.masterPlowActive then
+          Button:SetAttribute("useOnKeyDown",false)
           Button:SetAttribute("type","macro")
           Button:SetAttribute("macrotext","/cancelaura "..master_plow_buff)
         end
       elseif Button.ItemType ~= "Turnin" then
+        Button:SetAttribute("useOnKeyDown",false)
         Button:SetAttribute("type","item")
         Button:SetAttribute("item",Bag.." "..Slot)
       end
     else
       if Button.ItemType ~= "Turnin" then
+        Button:SetAttribute("useOnKeyDown",false)
         Button:SetAttribute("type","item")
         Button:SetAttribute("item",Bag.." "..Slot)
       end
@@ -782,6 +786,7 @@ function FH.M.ItemPostClick(Button,MouseButton,Down)
   if Down then return end
   if not InCombatLockdown() then
     if Button.ItemType ~= "Turnin" then
+      Button:SetAttribute("useOnKeyDown",false)
       Button:SetAttribute("type","item")
       Button:SetAttribute("item","item:"..Button.ItemID)
       if Button.ItemType == "FarmTool" and Button.ItemID == master_plow_item then

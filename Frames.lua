@@ -57,6 +57,7 @@ local function NewFarmhandButton(Name,Parent,ItemID,ItemType)
 
 	if ItemID then
 		f.ItemID = ItemID
+		f:SetAttribute("useOnKeyDown",false)
 		f:SetAttribute("downbutton","ignore")
 		f:SetAttribute("*type-ignore", "")
 		if ItemType ~= "Turnin" then
@@ -98,6 +99,7 @@ local function NewMacroButton(Step, SubStep, MacroText)
 	local f = CreateFrame("Button", "FHSBE_"..Step.."_"..SubStep, FarmhandScanButton, "SecureActionButtonTemplate")
 	f:SetSize(32,32)
 	f:RegisterForClicks("AnyUp","AnyDown")
+	f:SetAttribute("useOnKeyDown",false)
 	f:SetAttribute("type", "macro")
 	f:SetAttribute("macrotext", MacroText)
 	f:Hide()
@@ -304,6 +306,7 @@ do
 		scanCropsText = scanCropsText..(i~=1 and "\n/tar " or "/tar ")..crop.CropName
 	end
 end
+scanFrame:SetAttribute("useOnKeyDown",false)
 scanFrame:SetAttribute("type","macro")
 scanFrame:SetAttribute("macrotext",scanCropsText)
 scanFrame:SetScript("PostClick",FarmhandExp.Mark)
